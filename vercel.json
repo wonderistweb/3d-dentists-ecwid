@@ -1,0 +1,12 @@
+{
+  "outputDirectory": "dist",
+  "headers": [
+    {
+      "source": "/ecwid-custom.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=300" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ]
+}

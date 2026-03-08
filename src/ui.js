@@ -68,6 +68,9 @@ function injectStyles() {
       position: relative;
       z-index: 1;
       background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-sizing: border-box;
     }
     .${PREFIX}-section-label {
       font-size: 11px;

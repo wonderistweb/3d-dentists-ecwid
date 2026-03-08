@@ -60,212 +60,272 @@ function injectStyles() {
   if (document.getElementById(`${PREFIX}-styles`)) return;
   const style = document.createElement('style');
   style.id = `${PREFIX}-styles`;
+  // Brand accent from 3D Dentists site
+  const ACCENT = '#D4772C';
+  const ACCENT_HOVER = '#bf6823';
+  const DARK = '#1a1a1a';
+
   style.textContent = `
+    /* ── Hide native Ecwid elements when widget is active ── */
+    .${PREFIX}-active-page .product-details__product-purchase,
+    .${PREFIX}-active-page .product-details__product-price-row,
+    .${PREFIX}-active-page .product-details__product-share {
+      display: none !important;
+    }
+
+    /* ── Widget container ── */
     .${PREFIX}-widget {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
       max-width: 520px !important;
-      color: #1a1a1a !important;
+      color: ${DARK} !important;
       position: relative !important;
       z-index: 10 !important;
       background: #fff !important;
       padding: 24px !important;
       border-radius: 12px !important;
       box-sizing: border-box !important;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12) !important;
     }
-    .${PREFIX}-widget * {
-      color: inherit;
-      font-family: inherit;
-      box-sizing: border-box;
+    .${PREFIX}-widget *,
+    .${PREFIX}-widget *::before,
+    .${PREFIX}-widget *::after {
+      box-sizing: border-box !important;
+      font-family: inherit !important;
     }
+
+    /* ── Section label ── */
     .${PREFIX}-section-label {
       font-size: 11px !important;
-      font-weight: 600 !important;
-      letter-spacing: 0.05em !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.08em !important;
       text-transform: uppercase !important;
-      color: #666 !important;
-      margin-bottom: 8px !important;
+      color: #888 !important;
+      margin: 0 0 10px 0 !important;
+      padding: 0 !important;
     }
-    /* Registration radios */
+
+    /* ── Registration radios ── */
     .${PREFIX}-reg-list {
-      list-style: none;
-      margin: 0 0 16px;
-      padding: 0;
+      list-style: none !important;
+      margin: 0 0 20px 0 !important;
+      padding: 0 !important;
     }
     .${PREFIX}-reg-item {
       display: flex !important;
       align-items: center !important;
       justify-content: space-between !important;
-      padding: 12px 16px !important;
-      border: 1px solid #e0e0e0 !important;
-      border-radius: 8px !important;
-      margin-bottom: 6px !important;
+      padding: 12px 14px !important;
+      border: 2px solid #e5e7eb !important;
+      border-radius: 10px !important;
+      margin-bottom: 8px !important;
       cursor: pointer !important;
-      transition: border-color 0.15s, background 0.15s !important;
+      transition: all 0.15s ease !important;
       background: #fff !important;
     }
     .${PREFIX}-reg-item:hover {
-      border-color: #999 !important;
-    }
-    .${PREFIX}-reg-item.${PREFIX}-selected {
-      border-color: #1a1a1a !important;
+      border-color: #bbb !important;
       background: #fafafa !important;
     }
+    .${PREFIX}-reg-item.${PREFIX}-selected {
+      border-color: ${ACCENT} !important;
+      background: #fef9f5 !important;
+    }
     .${PREFIX}-reg-item input[type="radio"] {
-      appearance: none;
-      -webkit-appearance: none;
-      width: 18px;
-      height: 18px;
-      border: 2px solid #ccc;
-      border-radius: 50%;
-      margin-right: 12px;
-      flex-shrink: 0;
-      position: relative;
+      appearance: none !important;
+      -webkit-appearance: none !important;
+      width: 18px !important;
+      height: 18px !important;
+      min-width: 18px !important;
+      min-height: 18px !important;
+      border: 2px solid #ccc !important;
+      border-radius: 50% !important;
+      margin: 0 10px 0 0 !important;
+      padding: 0 !important;
+      flex-shrink: 0 !important;
+      position: relative !important;
+      background: #fff !important;
+      cursor: pointer !important;
     }
     .${PREFIX}-reg-item.${PREFIX}-selected input[type="radio"] {
-      border-color: #1a1a1a;
+      border-color: ${ACCENT} !important;
     }
     .${PREFIX}-reg-item.${PREFIX}-selected input[type="radio"]::after {
-      content: '';
-      position: absolute;
-      top: 3px;
-      left: 3px;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #1a1a1a;
+      content: '' !important;
+      position: absolute !important;
+      top: 3px !important;
+      left: 3px !important;
+      width: 8px !important;
+      height: 8px !important;
+      border-radius: 50% !important;
+      background: ${ACCENT} !important;
     }
     .${PREFIX}-reg-left {
-      display: flex;
-      align-items: center;
-      flex: 1;
+      display: flex !important;
+      align-items: center !important;
+      flex: 1 !important;
+      min-width: 0 !important;
     }
     .${PREFIX}-reg-label {
-      font-size: 14px !important;
+      font-size: 13px !important;
       font-weight: 500 !important;
-      color: #1a1a1a !important;
+      color: ${DARK} !important;
+      line-height: 1.3 !important;
     }
     .${PREFIX}-badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 8px;
-      border-radius: 4px;
-      white-space: nowrap;
-      margin-left: 8px;
+      font-size: 10px !important;
+      font-weight: 700 !important;
+      padding: 2px 7px !important;
+      border-radius: 4px !important;
+      white-space: nowrap !important;
+      margin-left: 8px !important;
+      flex-shrink: 0 !important;
+      letter-spacing: 0.02em !important;
     }
     .${PREFIX}-badge-lp {
-      background: #ffeaea;
-      color: #c0392b;
+      background: #fef2f2 !important;
+      color: #dc2626 !important;
     }
     .${PREFIX}-badge-to {
-      background: #e8f4fd;
-      color: #2980b9;
+      background: #eff6ff !important;
+      color: #2563eb !important;
     }
-    /* MasterMind toggle */
+
+    /* ── MasterMind toggle ── */
     .${PREFIX}-mm-box {
       display: flex !important;
       align-items: center !important;
       justify-content: space-between !important;
       padding: 14px 16px !important;
-      border: 1px solid #e0e0e0 !important;
-      border-radius: 8px !important;
-      margin-bottom: 16px !important;
-      background: #fff !important;
+      border: 2px solid #e5e7eb !important;
+      border-radius: 10px !important;
+      margin-bottom: 20px !important;
+      background: #fffbf5 !important;
+      gap: 12px !important;
+    }
+    .${PREFIX}-mm-left {
+      flex: 1 !important;
+      min-width: 0 !important;
     }
     .${PREFIX}-mm-label {
-      font-weight: 600 !important;
+      font-weight: 700 !important;
       font-size: 14px !important;
-      color: #1a1a1a !important;
+      color: ${DARK} !important;
+      line-height: 1.3 !important;
     }
     .${PREFIX}-mm-sub {
-      font-size: 12px !important;
+      font-size: 11px !important;
       color: #666 !important;
-      margin-top: 2px !important;
+      margin-top: 3px !important;
+      line-height: 1.3 !important;
     }
+    /* Toggle switch */
     .${PREFIX}-toggle {
-      position: relative;
-      width: 44px;
-      height: 24px;
-      background: #ccc;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: background 0.2s;
-      flex-shrink: 0;
+      position: relative !important;
+      width: 48px !important;
+      min-width: 48px !important;
+      height: 26px !important;
+      min-height: 26px !important;
+      background: #d1d5db !important;
+      border-radius: 13px !important;
+      cursor: pointer !important;
+      transition: background 0.2s ease !important;
+      flex-shrink: 0 !important;
+      border: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      display: block !important;
     }
     .${PREFIX}-toggle.${PREFIX}-active {
-      background: #1a1a1a;
+      background: ${ACCENT} !important;
     }
     .${PREFIX}-toggle::after {
-      content: '';
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 20px;
-      height: 20px;
-      background: #fff;
-      border-radius: 50%;
-      transition: transform 0.2s;
+      content: '' !important;
+      position: absolute !important;
+      top: 3px !important;
+      left: 3px !important;
+      width: 20px !important;
+      height: 20px !important;
+      background: #fff !important;
+      border-radius: 50% !important;
+      transition: transform 0.2s ease !important;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
     }
     .${PREFIX}-toggle.${PREFIX}-active::after {
-      transform: translateX(20px);
+      transform: translateX(22px) !important;
     }
-    /* Digital Access checkbox */
+
+    /* ── Digital Access checkbox ── */
     .${PREFIX}-da-box {
       display: flex !important;
       align-items: center !important;
       padding: 14px 16px !important;
-      border: 1px solid #e0e0e0 !important;
-      border-radius: 8px !important;
-      margin-bottom: 16px !important;
+      border: 2px solid #e5e7eb !important;
+      border-radius: 10px !important;
+      margin-bottom: 20px !important;
       cursor: pointer !important;
       background: #fff !important;
+      transition: border-color 0.15s ease !important;
+    }
+    .${PREFIX}-da-box:hover {
+      border-color: #bbb !important;
     }
     .${PREFIX}-da-box input[type="checkbox"] {
-      margin-right: 12px !important;
+      margin: 0 12px 0 0 !important;
       width: 18px !important;
       height: 18px !important;
+      min-width: 18px !important;
+      min-height: 18px !important;
+      flex-shrink: 0 !important;
+      cursor: pointer !important;
+      accent-color: ${ACCENT} !important;
     }
     .${PREFIX}-da-label {
       font-weight: 600 !important;
       font-size: 14px !important;
-      color: #1a1a1a !important;
+      color: ${DARK} !important;
     }
     .${PREFIX}-da-price {
       font-size: 12px !important;
-      color: #666 !important;
-      margin-left: 8px !important;
+      color: #888 !important;
+      margin-left: 6px !important;
     }
-    /* Stepper rows */
+
+    /* ── Stepper rows ── */
     .${PREFIX}-stepper-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      margin-bottom: 14px !important;
+      padding: 0 !important;
     }
-    .${PREFIX}-stepper-info {}
+    .${PREFIX}-stepper-info {
+      flex: 1 !important;
+      min-width: 0 !important;
+    }
     .${PREFIX}-stepper-name {
-      font-weight: 600 !important;
+      font-weight: 700 !important;
       font-size: 14px !important;
-      color: #1a1a1a !important;
+      color: ${DARK} !important;
     }
     .${PREFIX}-stepper-cap {
-      font-size: 12px !important;
-      color: #c0392b !important;
-      font-weight: 500 !important;
-      margin-left: 6px !important;
+      font-size: 11px !important;
+      color: #dc2626 !important;
+      font-weight: 600 !important;
+      margin-left: 4px !important;
     }
     .${PREFIX}-stepper-rate {
       font-size: 12px !important;
-      color: #666 !important;
+      color: #888 !important;
       margin-top: 2px !important;
     }
     .${PREFIX}-stepper-ctrl {
       display: flex !important;
       align-items: center !important;
-      border: 1px solid #e0e0e0 !important;
+      border: 2px solid #e5e7eb !important;
       border-radius: 8px !important;
       overflow: hidden !important;
       background: #fff !important;
+      flex-shrink: 0 !important;
     }
     .${PREFIX}-stepper-btn {
       width: 36px !important;
@@ -277,101 +337,111 @@ function injectStyles() {
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      color: #333 !important;
-      transition: background 0.1s !important;
+      color: ${DARK} !important;
+      transition: background 0.1s ease !important;
+      padding: 0 !important;
+      line-height: 1 !important;
     }
     .${PREFIX}-stepper-btn:hover {
-      background: #f5f5f5 !important;
+      background: #f3f4f6 !important;
     }
     .${PREFIX}-stepper-btn:disabled {
-      color: #ccc !important;
+      color: #d1d5db !important;
       cursor: default !important;
       background: #fff !important;
     }
     .${PREFIX}-stepper-val {
-      width: 48px !important;
+      width: 50px !important;
       text-align: center !important;
       font-size: 14px !important;
-      font-weight: 600 !important;
-      border-left: 1px solid #e0e0e0 !important;
-      border-right: 1px solid #e0e0e0 !important;
+      font-weight: 700 !important;
+      border-left: 1px solid #e5e7eb !important;
+      border-right: 1px solid #e5e7eb !important;
       line-height: 36px !important;
-      color: #1a1a1a !important;
+      color: ${DARK} !important;
       background: #fff !important;
     }
     .${PREFIX}-stepper-val-team-only {
-      font-size: 11px;
-      font-weight: 500;
-      color: #666;
+      font-size: 11px !important;
+      font-weight: 500 !important;
+      color: #888 !important;
     }
-    /* Price breakdown */
+
+    /* ── Price breakdown ── */
     .${PREFIX}-breakdown {
-      margin-top: 16px;
-      padding-top: 12px;
-      border-top: 1px solid #e0e0e0;
+      margin-top: 20px !important;
+      padding-top: 16px !important;
+      border-top: 2px solid #f0f0f0 !important;
     }
     .${PREFIX}-breakdown-line {
       display: flex !important;
       justify-content: space-between !important;
       font-size: 13px !important;
-      margin-bottom: 4px !important;
-      color: #444 !important;
+      margin-bottom: 6px !important;
+      color: #555 !important;
     }
     .${PREFIX}-breakdown-line span {
-      color: #444 !important;
+      color: inherit !important;
     }
     .${PREFIX}-breakdown-line.${PREFIX}-savings,
     .${PREFIX}-breakdown-line.${PREFIX}-savings span {
-      color: #27ae60 !important;
+      color: #16a34a !important;
+      font-weight: 600 !important;
     }
     .${PREFIX}-total-row {
       display: flex !important;
       justify-content: space-between !important;
       align-items: baseline !important;
-      margin-top: 8px !important;
-      padding-top: 8px !important;
+      margin-top: 12px !important;
+      padding-top: 12px !important;
+      border-top: 1px solid #e5e7eb !important;
     }
     .${PREFIX}-total-label {
-      font-weight: 600 !important;
-      font-size: 14px !important;
-      color: #1a1a1a !important;
+      font-weight: 700 !important;
+      font-size: 16px !important;
+      color: ${DARK} !important;
     }
     .${PREFIX}-total-amount {
-      font-weight: 700 !important;
-      font-size: 24px !important;
-      color: #1a1a1a !important;
+      font-weight: 800 !important;
+      font-size: 26px !important;
+      color: ${DARK} !important;
     }
-    /* Add to Cart button */
+
+    /* ── Add to Cart button ── */
     .${PREFIX}-add-btn {
       display: block !important;
       width: 100% !important;
-      padding: 14px !important;
-      margin-top: 16px !important;
+      padding: 15px !important;
+      margin-top: 20px !important;
       border: none !important;
-      border-radius: 8px !important;
-      background: #1a1a1a !important;
+      border-radius: 10px !important;
+      background: ${ACCENT} !important;
       color: #fff !important;
       font-size: 16px !important;
-      font-weight: 600 !important;
+      font-weight: 700 !important;
       cursor: pointer !important;
-      transition: background 0.15s !important;
+      transition: background 0.15s ease !important;
+      letter-spacing: 0.02em !important;
+      text-transform: none !important;
     }
     .${PREFIX}-add-btn:hover {
-      background: #333 !important;
+      background: ${ACCENT_HOVER} !important;
     }
     .${PREFIX}-add-btn:disabled {
-      background: #999 !important;
+      background: #d1d5db !important;
       cursor: not-allowed !important;
+      color: #fff !important;
     }
-    /* Error message */
+
+    /* ── Error message ── */
     .${PREFIX}-error {
-      color: #c0392b;
-      font-size: 13px;
-      margin-top: 8px;
-      display: none;
+      color: #dc2626 !important;
+      font-size: 13px !important;
+      margin-top: 8px !important;
+      display: none !important;
     }
     .${PREFIX}-error.${PREFIX}-visible {
-      display: block;
+      display: block !important;
     }
   `;
   document.head.appendChild(style);
@@ -390,14 +460,19 @@ function injectStyles() {
 export function renderWidget(nativeContainer, config, productId, allRegistrationOptions) {
   injectStyles();
 
-  // Hide native UI: options, buy/purchase section, price, and share
+  // Hide native UI via both CSS class (persistent) and inline (immediate)
   nativeContainer.style.display = 'none';
-  const nativePurchase = document.querySelector('.product-details__product-purchase');
-  if (nativePurchase) nativePurchase.style.display = 'none';
-  const nativePrice = document.querySelector('.product-details__product-price-row');
-  if (nativePrice) nativePrice.style.display = 'none';
-  const nativeShare = document.querySelector('.product-details__product-share');
-  if (nativeShare) nativeShare.style.display = 'none';
+  // Add marker class to product details container so our CSS rules hide native elements
+  const detailsRoot = nativeContainer.closest('.product-details') || nativeContainer.parentElement;
+  detailsRoot.classList.add(`${PREFIX}-active-page`);
+  // Also hide inline for immediate effect
+  ['.product-details__product-purchase',
+   '.product-details__product-price-row',
+   '.product-details__product-share'
+  ].forEach((sel) => {
+    const el = document.querySelector(sel);
+    if (el) el.style.display = 'none';
+  });
 
   // Remove previous widget if re-rendering
   const prev = nativeContainer.parentElement.querySelector(`.${PREFIX}-widget`);
@@ -479,7 +554,7 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
     const showMM = config.hasMastermind && !(isDO && config.mastermindDoApplies === false);
     if (showMM) {
       const mmBox = el('div', `${PREFIX}-mm-box`);
-      const mmLeft = el('div');
+      const mmLeft = el('div', `${PREFIX}-mm-left`);
       const mmLabel = el('div', `${PREFIX}-mm-label`);
       mmLabel.textContent = 'MasterMind Member?';
       mmLeft.appendChild(mmLabel);

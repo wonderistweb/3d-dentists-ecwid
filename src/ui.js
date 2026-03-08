@@ -62,23 +62,29 @@ function injectStyles() {
   style.id = `${PREFIX}-styles`;
   style.textContent = `
     .${PREFIX}-widget {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      max-width: 520px;
-      color: #1a1a1a;
-      position: relative;
-      z-index: 1;
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      max-width: 520px !important;
+      color: #1a1a1a !important;
+      position: relative !important;
+      z-index: 10 !important;
+      background: #fff !important;
+      padding: 24px !important;
+      border-radius: 12px !important;
+      box-sizing: border-box !important;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
+    }
+    .${PREFIX}-widget * {
+      color: inherit;
+      font-family: inherit;
       box-sizing: border-box;
     }
     .${PREFIX}-section-label {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      color: #666;
-      margin-bottom: 8px;
+      font-size: 11px !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.05em !important;
+      text-transform: uppercase !important;
+      color: #666 !important;
+      margin-bottom: 8px !important;
     }
     /* Registration radios */
     .${PREFIX}-reg-list {
@@ -87,22 +93,23 @@ function injectStyles() {
       padding: 0;
     }
     .${PREFIX}-reg-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      margin-bottom: 6px;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      padding: 12px 16px !important;
+      border: 1px solid #e0e0e0 !important;
+      border-radius: 8px !important;
+      margin-bottom: 6px !important;
+      cursor: pointer !important;
+      transition: border-color 0.15s, background 0.15s !important;
+      background: #fff !important;
     }
     .${PREFIX}-reg-item:hover {
-      border-color: #999;
+      border-color: #999 !important;
     }
     .${PREFIX}-reg-item.${PREFIX}-selected {
-      border-color: #1a1a1a;
-      background: #fafafa;
+      border-color: #1a1a1a !important;
+      background: #fafafa !important;
     }
     .${PREFIX}-reg-item input[type="radio"] {
       appearance: none;
@@ -134,8 +141,9 @@ function injectStyles() {
       flex: 1;
     }
     .${PREFIX}-reg-label {
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 14px !important;
+      font-weight: 500 !important;
+      color: #1a1a1a !important;
     }
     .${PREFIX}-badge {
       font-size: 11px;
@@ -155,22 +163,24 @@ function injectStyles() {
     }
     /* MasterMind toggle */
     .${PREFIX}-mm-box {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 16px;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      margin-bottom: 16px;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      padding: 14px 16px !important;
+      border: 1px solid #e0e0e0 !important;
+      border-radius: 8px !important;
+      margin-bottom: 16px !important;
+      background: #fff !important;
     }
     .${PREFIX}-mm-label {
-      font-weight: 600;
-      font-size: 14px;
+      font-weight: 600 !important;
+      font-size: 14px !important;
+      color: #1a1a1a !important;
     }
     .${PREFIX}-mm-sub {
-      font-size: 12px;
-      color: #666;
-      margin-top: 2px;
+      font-size: 12px !important;
+      color: #666 !important;
+      margin-top: 2px !important;
     }
     .${PREFIX}-toggle {
       position: relative;
@@ -201,27 +211,29 @@ function injectStyles() {
     }
     /* Digital Access checkbox */
     .${PREFIX}-da-box {
-      display: flex;
-      align-items: center;
-      padding: 14px 16px;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      margin-bottom: 16px;
-      cursor: pointer;
+      display: flex !important;
+      align-items: center !important;
+      padding: 14px 16px !important;
+      border: 1px solid #e0e0e0 !important;
+      border-radius: 8px !important;
+      margin-bottom: 16px !important;
+      cursor: pointer !important;
+      background: #fff !important;
     }
     .${PREFIX}-da-box input[type="checkbox"] {
-      margin-right: 12px;
-      width: 18px;
-      height: 18px;
+      margin-right: 12px !important;
+      width: 18px !important;
+      height: 18px !important;
     }
     .${PREFIX}-da-label {
-      font-weight: 600;
-      font-size: 14px;
+      font-weight: 600 !important;
+      font-size: 14px !important;
+      color: #1a1a1a !important;
     }
     .${PREFIX}-da-price {
-      font-size: 12px;
-      color: #666;
-      margin-left: 8px;
+      font-size: 12px !important;
+      color: #666 !important;
+      margin-left: 8px !important;
     }
     /* Stepper rows */
     .${PREFIX}-stepper-row {
@@ -232,56 +244,60 @@ function injectStyles() {
     }
     .${PREFIX}-stepper-info {}
     .${PREFIX}-stepper-name {
-      font-weight: 600;
-      font-size: 14px;
+      font-weight: 600 !important;
+      font-size: 14px !important;
+      color: #1a1a1a !important;
     }
     .${PREFIX}-stepper-cap {
-      font-size: 12px;
-      color: #c0392b;
-      font-weight: 500;
-      margin-left: 6px;
+      font-size: 12px !important;
+      color: #c0392b !important;
+      font-weight: 500 !important;
+      margin-left: 6px !important;
     }
     .${PREFIX}-stepper-rate {
-      font-size: 12px;
-      color: #666;
-      margin-top: 2px;
+      font-size: 12px !important;
+      color: #666 !important;
+      margin-top: 2px !important;
     }
     .${PREFIX}-stepper-ctrl {
-      display: flex;
-      align-items: center;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      overflow: hidden;
+      display: flex !important;
+      align-items: center !important;
+      border: 1px solid #e0e0e0 !important;
+      border-radius: 8px !important;
+      overflow: hidden !important;
+      background: #fff !important;
     }
     .${PREFIX}-stepper-btn {
-      width: 36px;
-      height: 36px;
-      border: none;
-      background: #fff;
-      font-size: 18px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #333;
-      transition: background 0.1s;
+      width: 36px !important;
+      height: 36px !important;
+      border: none !important;
+      background: #fff !important;
+      font-size: 18px !important;
+      cursor: pointer !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      color: #333 !important;
+      transition: background 0.1s !important;
     }
     .${PREFIX}-stepper-btn:hover {
-      background: #f5f5f5;
+      background: #f5f5f5 !important;
     }
     .${PREFIX}-stepper-btn:disabled {
-      color: #ccc;
-      cursor: default;
-      background: #fff;
+      color: #ccc !important;
+      cursor: default !important;
+      background: #fff !important;
     }
     .${PREFIX}-stepper-val {
-      width: 48px;
-      text-align: center;
-      font-size: 14px;
-      font-weight: 600;
-      border-left: 1px solid #e0e0e0;
-      border-right: 1px solid #e0e0e0;
-      line-height: 36px;
+      width: 48px !important;
+      text-align: center !important;
+      font-size: 14px !important;
+      font-weight: 600 !important;
+      border-left: 1px solid #e0e0e0 !important;
+      border-right: 1px solid #e0e0e0 !important;
+      line-height: 36px !important;
+      color: #1a1a1a !important;
+      background: #fff !important;
     }
     .${PREFIX}-stepper-val-team-only {
       font-size: 11px;
@@ -295,51 +311,57 @@ function injectStyles() {
       border-top: 1px solid #e0e0e0;
     }
     .${PREFIX}-breakdown-line {
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-      margin-bottom: 4px;
-      color: #444;
+      display: flex !important;
+      justify-content: space-between !important;
+      font-size: 13px !important;
+      margin-bottom: 4px !important;
+      color: #444 !important;
     }
-    .${PREFIX}-breakdown-line.${PREFIX}-savings {
-      color: #27ae60;
+    .${PREFIX}-breakdown-line span {
+      color: #444 !important;
+    }
+    .${PREFIX}-breakdown-line.${PREFIX}-savings,
+    .${PREFIX}-breakdown-line.${PREFIX}-savings span {
+      color: #27ae60 !important;
     }
     .${PREFIX}-total-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-top: 8px;
-      padding-top: 8px;
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: baseline !important;
+      margin-top: 8px !important;
+      padding-top: 8px !important;
     }
     .${PREFIX}-total-label {
-      font-weight: 600;
-      font-size: 14px;
+      font-weight: 600 !important;
+      font-size: 14px !important;
+      color: #1a1a1a !important;
     }
     .${PREFIX}-total-amount {
-      font-weight: 700;
-      font-size: 24px;
+      font-weight: 700 !important;
+      font-size: 24px !important;
+      color: #1a1a1a !important;
     }
     /* Add to Cart button */
     .${PREFIX}-add-btn {
-      display: block;
-      width: 100%;
-      padding: 14px;
-      margin-top: 16px;
-      border: none;
-      border-radius: 8px;
-      background: #1a1a1a;
-      color: #fff;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s;
+      display: block !important;
+      width: 100% !important;
+      padding: 14px !important;
+      margin-top: 16px !important;
+      border: none !important;
+      border-radius: 8px !important;
+      background: #1a1a1a !important;
+      color: #fff !important;
+      font-size: 16px !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      transition: background 0.15s !important;
     }
     .${PREFIX}-add-btn:hover {
-      background: #333;
+      background: #333 !important;
     }
     .${PREFIX}-add-btn:disabled {
-      background: #999;
-      cursor: not-allowed;
+      background: #999 !important;
+      cursor: not-allowed !important;
     }
     /* Error message */
     .${PREFIX}-error {

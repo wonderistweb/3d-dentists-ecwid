@@ -67,10 +67,15 @@ function injectStyles() {
 
   style.textContent = `
     /* ── Hide native Ecwid elements when widget is active ── */
-    .${PREFIX}-active-page .product-details__product-purchase,
-    .${PREFIX}-active-page .product-details__product-price-row,
-    .${PREFIX}-active-page .product-details__product-share {
+    body.${PREFIX}-active .product-details__product-purchase,
+    body.${PREFIX}-active .product-details__product-price-row,
+    body.${PREFIX}-active .product-details__product-share,
+    body.${PREFIX}-active .product-details-module__product-purchase,
+    body.${PREFIX}-active .details-product-purchase {
       display: none !important;
+      visibility: hidden !important;
+      height: 0 !important;
+      overflow: hidden !important;
     }
 
     /* ── Widget container ── */
@@ -460,18 +465,17 @@ function injectStyles() {
 export function renderWidget(nativeContainer, config, productId, allRegistrationOptions) {
   injectStyles();
 
-  // Hide native UI via both CSS class (persistent) and inline (immediate)
+  // Hide native UI via both CSS class on body (persistent) and inline (immediate)
   nativeContainer.style.display = 'none';
-  // Add marker class to product details container so our CSS rules hide native elements
-  const detailsRoot = nativeContainer.closest('.product-details') || nativeContainer.parentElement;
-  detailsRoot.classList.add(`${PREFIX}-active-page`);
+  document.body.classList.add(`${PREFIX}-active`);
   // Also hide inline for immediate effect
   ['.product-details__product-purchase',
    '.product-details__product-price-row',
-   '.product-details__product-share'
+   '.product-details__product-share',
+   '.product-details-module__product-purchase',
+   '.details-product-purchase'
   ].forEach((sel) => {
-    const el = document.querySelector(sel);
-    if (el) el.style.display = 'none';
+    document.querySelectorAll(sel).forEach((e) => { e.style.display = 'none'; });
   });
 
   // Remove previous widget if re-rendering

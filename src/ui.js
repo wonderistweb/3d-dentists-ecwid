@@ -65,6 +65,9 @@ function injectStyles() {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       max-width: 520px;
       color: #1a1a1a;
+      position: relative;
+      z-index: 1;
+      background: #fff;
     }
     .${PREFIX}-section-label {
       font-size: 11px;
@@ -362,12 +365,14 @@ function injectStyles() {
 export function renderWidget(nativeContainer, config, productId, allRegistrationOptions) {
   injectStyles();
 
-  // Hide native UI: options, buy button, and price
+  // Hide native UI: options, buy/purchase section, price, and share
   nativeContainer.style.display = 'none';
-  const nativeBuyBtn = document.querySelector('.details-product-purchase__add-to-bag');
-  if (nativeBuyBtn) nativeBuyBtn.closest('.product-details-module')?.style.setProperty('display', 'none');
+  const nativePurchase = document.querySelector('.product-details__product-purchase');
+  if (nativePurchase) nativePurchase.style.display = 'none';
   const nativePrice = document.querySelector('.product-details__product-price-row');
   if (nativePrice) nativePrice.style.display = 'none';
+  const nativeShare = document.querySelector('.product-details__product-share');
+  if (nativeShare) nativeShare.style.display = 'none';
 
   // Remove previous widget if re-rendering
   const prev = nativeContainer.parentElement.querySelector(`.${PREFIX}-widget`);

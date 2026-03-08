@@ -362,8 +362,12 @@ function injectStyles() {
 export function renderWidget(nativeContainer, config, productId, allRegistrationOptions) {
   injectStyles();
 
-  // Hide native UI
+  // Hide native UI: options, buy button, and price
   nativeContainer.style.display = 'none';
+  const nativeBuyBtn = document.querySelector('.details-product-purchase__add-to-bag');
+  if (nativeBuyBtn) nativeBuyBtn.closest('.product-details-module')?.style.setProperty('display', 'none');
+  const nativePrice = document.querySelector('.product-details__product-price-row');
+  if (nativePrice) nativePrice.style.display = 'none';
 
   // Remove previous widget if re-rendering
   const prev = nativeContainer.parentElement.querySelector(`.${PREFIX}-widget`);

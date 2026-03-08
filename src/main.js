@@ -1,11 +1,11 @@
 /**
  * 3D Dentists — Ecwid Storefront Customization Script
  *
- * Entry point. Listens for Ecwid page loads, detects product SKU,
- * and renders the custom booking widget when the product is in COURSE_CONFIG.
+ * Entry point. Listens for Ecwid page loads, detects product via
+ * product ID mapping, and renders the custom booking widget.
  */
-import { COURSE_CONFIG } from './config.js';
-import { renderWidget, parseRegistrationOptions, getVisibleOptions } from './ui.js';
+import { COURSE_CONFIG, PRODUCT_ID_MAP } from './config.js';
+import { renderWidget, parseRegistrationOptions } from './ui.js';
 
 (function init() {
   // Guard: Ecwid must exist
@@ -30,29 +30,24 @@ import { renderWidget, parseRegistrationOptions, getVisibleOptions } from './ui.
 
 /**
  * Called when a product page renders.
- * Reads the SKU from the DOM, checks COURSE_CONFIG, and renders widget.
+ * Looks up SKU via product ID map, then renders custom widget.
  */
 function handleProductPage(productId) {
-  // Wait for product details to fully render
-  waitForElement('.product-details__product-sku .product-details__product-sku-value', (skuEl) => {
-    const sku = skuEl.textContent.trim();
-    const config = COURSE_CONFIG[sku];
+  const sku = PRODUCT_ID_MAP[productId];
+  if (!sku) {
+    // Unknown product — leave native UI intact
+    return;
+  }
 
-    if (!config) {
-      // Unknown SKU — leave native UI intact
-      return;
-    }
+  const config = COURSE_CONFIG[sku];
+  if (!config) {
+    return;
+  }
 
-    // Find native options container
-    const nativeOptions = document.querySelector('.product-details__options');
-    if (!nativeOptions) {
-      console.warn('[3D-Dentists] Native options container not found for', sku);
-      return;
-    }
-
-    // Parse registration options from native DOM before hiding it
-    const regContainer = nativeOptions.querySelector('[data-option-name="Registration"]')
-      || findOptionByLabel(nativeOptions, 'Registration');
+  // Wait for native options to render (Ecwid renders async)
+  waitForElement('.product-details__product-options', (nativeOptions) => {
+    // Find Registration option container by class
+    const regContainer = nativeOptions.querySelector('.details-product-option--Registration');
     const allOptions = parseRegistrationOptions(regContainer);
 
     if (allOptions.length === 0) {
@@ -60,21 +55,9 @@ function handleProductPage(productId) {
       return;
     }
 
+    console.log('[3D-Dentists] Rendering custom UI for', sku, '— found', allOptions.length, 'registration options');
     renderWidget(nativeOptions, config, productId, allOptions);
   });
-}
-
-/**
- * Fallback: find the option container by scanning label text.
- */
-function findOptionByLabel(parent, labelText) {
-  const labels = parent.querySelectorAll('.product-details-module__title');
-  for (const lbl of labels) {
-    if (lbl.textContent.trim().toLowerCase() === labelText.toLowerCase()) {
-      return lbl.closest('.product-details-module');
-    }
-  }
-  return null;
 }
 
 /**

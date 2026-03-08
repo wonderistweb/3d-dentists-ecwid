@@ -9,6 +9,22 @@
  *
  * Dates are NEVER hardcoded here — they are read from the Ecwid DOM at runtime.
  */
+/**
+ * PRODUCT_ID_MAP — Maps Ecwid product IDs to SKUs.
+ * Product IDs come from the URL hash and OnPageLoaded callback.
+ * Update this when new products are created in Ecwid admin.
+ */
+export const PRODUCT_ID_MAP = {
+  817675365: '3D-DGS-001',
+  817672610: '3D-SD-001',
+  817677323: '3D-CAA-001',
+  817677320: '3D-SAI-001',
+  817672612: '3D-AGS-001',
+  817677321: '3D-FAE-001',
+  817677322: '3D-TRT-001',
+  // 3D-FM-001 product ID: add when known
+};
+
 export const COURSE_CONFIG = {
   // ── TEAM MEMBER courses ─────────────────────────────────────────────
   // Price per team member is baked into Ecwid variations.

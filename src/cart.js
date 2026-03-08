@@ -8,8 +8,9 @@
  *
  * MasterMind (Path B):
  *   When MasterMind is toggled, append " - MasterMind" to the registration
- *   value. The MM-priced variation rows in Ecwid handle pricing. Do NOT pass
- *   the "MasterMind Member?" option — pricing is baked into the variation.
+ *   value. The MM-priced variation rows in Ecwid handle pricing.
+ *   ALSO pass "MasterMind Member?" option since Ecwid requires all options
+ *   to be set. Similarly, always pass "Digital Access" when the course has it.
  */
 import { isTeamOnly } from './pricing.js';
 
@@ -37,6 +38,20 @@ function getAddOnOptionValue(config, count) {
     return count === 1 ? '1 Assistant' : `${count} Assistants`;
   }
   return 'None';
+}
+
+/**
+ * Attach required global options (MasterMind Member?, Digital Access)
+ * that Ecwid mandates on every addProduct call.
+ */
+function attachRequiredOptions(options, config, state) {
+  if (config.hasMastermind) {
+    options['MasterMind Member?'] = state.isMastermind ? 'Yes' : 'No';
+  }
+  if (config.hasDigitalAccess) {
+    options['Digital Access'] = state.digitalAccess ? 'Yes' : 'No';
+  }
+  return options;
 }
 
 /**
@@ -72,10 +87,11 @@ export async function addToCart(productId, config, state, allOptions, callback) 
 
     if (config.type === 'simple') {
       // Simple: just registration + quantity
+      const options = attachRequiredOptions({ Registration: registration }, config, state);
       const success = await ecwidAddProduct({
         id: productId,
         quantity: doctors,
-        options: { Registration: registration },
+        options,
       });
       callback(success);
       return;
@@ -89,12 +105,11 @@ export async function addToCart(productId, config, state, allOptions, callback) 
     if (config.type === 'teamMembers' && doctors === 0) {
       // Team-only: use "Team Only - [date]" registration, team member count option
       const toRegistration = state.registration; // already a "Team Only - ..." value
+      const options = attachRequiredOptions({ Registration: toRegistration }, config, state);
       const success = await ecwidAddProduct({
         id: productId,
         quantity: 1,
-        options: {
-          Registration: toRegistration,
-        },
+        options,
       });
       callback(success);
       return;
@@ -108,9 +123,7 @@ export async function addToCart(productId, config, state, allOptions, callback) 
       } else if (config.type === 'assistants') {
         options['Assistants'] = addOnValue;
       }
-      if (config.hasDigitalAccess && state.digitalAccess) {
-        options['Digital Access'] = 'Yes';
-      }
+      attachRequiredOptions(options, config, state);
 
       const success = await ecwidAddProduct({
         id: productId,
@@ -127,9 +140,7 @@ export async function addToCart(productId, config, state, allOptions, callback) 
       } else if (config.type === 'assistants') {
         firstOptions['Assistants'] = addOnValue;
       }
-      if (config.hasDigitalAccess && state.digitalAccess) {
-        firstOptions['Digital Access'] = 'Yes';
-      }
+      attachRequiredOptions(firstOptions, config, state);
 
       const first = await ecwidAddProduct({
         id: productId,
@@ -149,6 +160,7 @@ export async function addToCart(productId, config, state, allOptions, callback) 
       } else if (config.type === 'assistants') {
         secondOptions['Assistants'] = 'None';
       }
+      attachRequiredOptions(secondOptions, config, state);
 
       const second = await ecwidAddProduct({
         id: productId,

@@ -156,7 +156,7 @@ const HEADER = [
   'product_option_swatch_hex_value','product_option_swatch_image',
   'product_option_swatch_selector_is_image',
   'product_variation_option_Registration','product_variation_option_Assistants',
-  'product_variation_option_Team-Members','product_variation_sku',
+  'product_variation_option_Team Members','product_variation_sku',
   'category_internal_id','category_path','category_is_available',
   'category_description','category_seo_title','category_seo_description',
   'category_image','category_image_alt','category_order_by',
@@ -211,7 +211,7 @@ function makeVariationRow(productId, sku, price, variationSku, regValue, assista
   setCol(row, 'product_quantity_minimum_allowed_for_purchase', 1);
   setCol(row, 'product_variation_option_Registration', regValue);
   if (assistantsValue != null) setCol(row, 'product_variation_option_Assistants', assistantsValue);
-  if (teamMembersValue != null) setCol(row, 'product_variation_option_Team-Members', teamMembersValue);
+  if (teamMembersValue != null) setCol(row, 'product_variation_option_Team Members', teamMembersValue);
   setCol(row, 'product_variation_sku', variationSku);
   setCol(row, 'source_store_id', STORE_ID);
   return row;

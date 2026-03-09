@@ -22,7 +22,7 @@ export const PRODUCT_ID_MAP = {
   817672612: '3D-AGS-001',
   817677321: '3D-FAE-001',
   817677322: '3D-TRT-001',
-  // 3D-FM-001 product ID: add when known
+  817672611: '3D-FM-001',
 };
 
 export const COURSE_CONFIG = {

@@ -12,8 +12,6 @@
  *   ALSO pass "MasterMind Member?" option since Ecwid requires all options
  *   to be set. Similarly, always pass "Digital Access" when the course has it.
  */
-import { isTeamOnly } from './pricing.js';
-
 /**
  * Build the Registration value to pass to Ecwid.
  * If MasterMind is active, appends " - MasterMind".
@@ -103,9 +101,13 @@ export async function addToCart(productId, config, state, allOptions, callback) 
 
     // Handle team-only mode (0 doctors)
     if (config.type === 'teamMembers' && doctors === 0) {
-      // Team-only: use "Team Only - [date]" registration, team member count option
-      const toRegistration = state.registration; // already a "Team Only - ..." value
-      const options = attachRequiredOptions({ Registration: toRegistration }, config, state);
+      // Team-only: prepend "Team Only - " to the regular date for the Ecwid variation
+      const toRegistration = 'Team Only - ' + state.registration;
+      const options = {
+        Registration: toRegistration,
+        'Team Members': addOnValue,
+      };
+      attachRequiredOptions(options, config, state);
       const success = await ecwidAddProduct({
         id: productId,
         quantity: 1,

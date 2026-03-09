@@ -3,7 +3,7 @@
  * Reads registration options from Ecwid DOM, then replaces the native options
  * section with our custom UI.
  */
-import { calculatePrice, isDidacticOnly, isTeamOnly, fmt } from './pricing.js';
+import { calculatePrice, isDidacticOnly, fmt } from './pricing.js';
 import { addToCart } from './cart.js';
 
 const PREFIX = 'td3';
@@ -48,10 +48,11 @@ export function parseRegistrationOptions(container) {
 
 /**
  * Filter registration options for display.
- * Hide MasterMind-suffixed options (those are used internally for cart calls).
+ * Hide MasterMind-suffixed and Team Only options (those are used internally for cart calls).
+ * Team Only is handled by setting the Doctors stepper to 0.
  */
 export function getVisibleOptions(allOptions) {
-  return allOptions.filter((o) => !o.isMastermind);
+  return allOptions.filter((o) => !o.isMastermind && !o.isTeamOnly);
 }
 
 // ─── Inject styles ────────────────────────────────────────────────────────────
@@ -437,6 +438,14 @@ function injectStyles() {
       cursor: not-allowed !important;
       color: #fff !important;
     }
+    .${PREFIX}-add-btn.${PREFIX}-checkout {
+      background: #16a34a !important;
+      cursor: pointer !important;
+      color: #fff !important;
+    }
+    .${PREFIX}-add-btn.${PREFIX}-checkout:hover {
+      background: #15803d !important;
+    }
 
     /* ── Error message ── */
     .${PREFIX}-error {
@@ -488,10 +497,17 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
 
   const state = createState(config);
   const visibleOptions = getVisibleOptions(allRegistrationOptions);
+  let addedToCart = false;
 
   // Select first visible option by default
   if (visibleOptions.length > 0) {
     state.registration = visibleOptions[0].value;
+  }
+
+  /** Reset addedToCart and re-render (called when user changes any option) */
+  function onOptionChange() {
+    addedToCart = false;
+    render();
   }
 
   function render() {
@@ -524,26 +540,14 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
         badge.textContent = 'Live Patients';
         item.appendChild(badge);
       }
-      if (opt.isTeamOnly) {
-        const badge = el('span', `${PREFIX}-badge ${PREFIX}-badge-to`);
-        badge.textContent = 'Team Only';
-        item.appendChild(badge);
-      }
 
       item.addEventListener('click', () => {
         state.registration = opt.value;
-        // If switching to team-only registration, set doctors to 0
-        if (isTeamOnly(opt.value)) {
-          state.doctors = 0;
-          if (state.teamMembers === 0) state.teamMembers = 1;
-        } else if (state.doctors === 0 && config.type !== 'simple') {
-          state.doctors = 1;
-        }
         // Reset mastermind if didactic only and not applicable
         if (isDidacticOnly(opt.value) && config.mastermindDoApplies === false) {
           state.isMastermind = false;
         }
-        render();
+        onOptionChange();
       });
 
       regList.appendChild(item);
@@ -552,7 +556,6 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
     widget.appendChild(regSection);
 
     const isDO = isDidacticOnly(state.registration);
-    const isTO = isTeamOnly(state.registration);
 
     // MasterMind toggle (only for courses that have it, and not for didactic-only when excluded)
     const showMM = config.hasMastermind && !(isDO && config.mastermindDoApplies === false);
@@ -571,7 +574,7 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
       if (state.isMastermind) toggle.classList.add(`${PREFIX}-active`);
       toggle.addEventListener('click', () => {
         state.isMastermind = !state.isMastermind;
-        render();
+        onOptionChange();
       });
       mmBox.appendChild(toggle);
       widget.appendChild(mmBox);
@@ -581,23 +584,24 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
 
     // Steppers section
     if (config.type === 'teamMembers') {
-      // Doctor stepper
-      if (!isTO) {
-        const docRate = config.doctorPrice;
-        widget.appendChild(
-          stepper('Doctors', `$${fmt(docRate)}/doctor`, state.doctors, 0, 10, null, (v) => {
-            state.doctors = v;
-            render();
-          })
-        );
-      }
-
-      // Team Members stepper
-      const tmRate = config.teamMemberPrice;
+      // Doctor stepper — min 0 allows team-only mode
+      const docRate = config.doctorPrice;
       widget.appendChild(
-        stepper('Team Members', `$${fmt(tmRate)}/person`, state.teamMembers, 0, config.maxTeamMembers, null, (v) => {
+        stepper('Doctors', `$${fmt(docRate)}/doctor`, state.doctors, 0, 10, null, (v) => {
+          state.doctors = v;
+          // When doctors goes to 0, ensure at least 1 team member
+          if (v === 0 && state.teamMembers === 0) state.teamMembers = 1;
+          onOptionChange();
+        })
+      );
+
+      // Team Members stepper — min 1 when doctors is 0 (team-only)
+      const tmRate = config.teamMemberPrice;
+      const tmMin = state.doctors === 0 ? 1 : 0;
+      widget.appendChild(
+        stepper('Team Members', `$${fmt(tmRate)}/person`, state.teamMembers, tmMin, config.maxTeamMembers, null, (v) => {
           state.teamMembers = v;
-          render();
+          onOptionChange();
         })
       );
     } else if (config.type === 'assistants') {
@@ -607,7 +611,7 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
       widget.appendChild(
         stepper('Doctors', `$${fmt(effectiveRate)}/doctor`, state.doctors, 1, 10, null, (v) => {
           state.doctors = v;
-          render();
+          onOptionChange();
         })
       );
 
@@ -623,7 +627,7 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
       widget.appendChild(
         stepper('Assistants', `$${fmt(asstRate)}/person`, state.assistants, 0, maxAsst, capLabel, (v) => {
           state.assistants = v;
-          render();
+          onOptionChange();
         })
       );
     } else if (config.type === 'simple') {
@@ -631,7 +635,7 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
       widget.appendChild(
         stepper('Doctors', `$${fmt(config.doctorPrice)}/doctor`, state.doctors, 1, 10, null, (v) => {
           state.doctors = v;
-          render();
+          onOptionChange();
         })
       );
     }
@@ -644,7 +648,7 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
       cb.checked = state.digitalAccess;
       cb.addEventListener('change', () => {
         state.digitalAccess = cb.checked;
-        render();
+        onOptionChange();
       });
       daBox.appendChild(cb);
       const daLabel = el('span', `${PREFIX}-da-label`);
@@ -657,7 +661,7 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
         if (e.target !== cb) {
           cb.checked = !cb.checked;
           state.digitalAccess = cb.checked;
-          render();
+          onOptionChange();
         }
       });
       widget.appendChild(daBox);
@@ -700,27 +704,39 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
     }
     widget.appendChild(errorMsg);
 
-    // Add to Cart button
+    // Add to Cart / Go To Checkout button
     const btn = document.createElement('button');
     btn.className = `${PREFIX}-add-btn`;
-    btn.textContent = 'Add to Cart';
-    btn.disabled = !isValid || !state.registration;
-    btn.addEventListener('click', () => {
-      btn.disabled = true;
-      btn.textContent = 'Adding...';
-      addToCart(productId, config, state, allRegistrationOptions, (success) => {
-        if (success) {
-          btn.textContent = 'Added!';
-          setTimeout(() => {
-            btn.disabled = false;
-            btn.textContent = 'Add to Cart';
-          }, 2000);
-        } else {
-          btn.textContent = 'Error — try again';
-          btn.disabled = false;
+    if (addedToCart) {
+      // Already added — show Go To Checkout
+      btn.textContent = 'Go To Checkout →';
+      btn.classList.add(`${PREFIX}-checkout`);
+      btn.disabled = false;
+      btn.addEventListener('click', () => {
+        try {
+          // eslint-disable-next-line no-undef
+          Ecwid.openPage('cart');
+        } catch (_e) {
+          window.location.hash = '#!/~/cart';
         }
       });
-    });
+    } else {
+      btn.textContent = 'Add to Cart';
+      btn.disabled = !isValid || !state.registration;
+      btn.addEventListener('click', () => {
+        btn.disabled = true;
+        btn.textContent = 'Adding...';
+        addToCart(productId, config, state, allRegistrationOptions, (success) => {
+          if (success) {
+            addedToCart = true;
+            render();
+          } else {
+            btn.textContent = 'Error — try again';
+            btn.disabled = false;
+          }
+        });
+      });
+    }
     widget.appendChild(btn);
   }
 

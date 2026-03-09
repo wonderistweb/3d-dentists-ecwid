@@ -54,13 +54,17 @@ function attachRequiredOptions(options, config, state) {
 
 /**
  * Wrap Ecwid.Cart.addProduct in a Promise.
+ * Ecwid expects the callback as a property of the params object, not a second argument.
  */
 function ecwidAddProduct(params) {
   return new Promise((resolve) => {
     try {
       // eslint-disable-next-line no-undef
-      Ecwid.Cart.addProduct(params, function (success) {
-        resolve(success);
+      Ecwid.Cart.addProduct({
+        ...params,
+        callback: function (success) {
+          resolve(success);
+        },
       });
     } catch (e) {
       console.error('[3D-Dentists] Cart add error:', e);

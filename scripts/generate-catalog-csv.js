@@ -131,36 +131,27 @@ const PRODUCTS = {
 };
 
 // ─── CSV column definitions ─────────────────────────────────────────────────
+// Only columns we actually use — keeps the import clean with zero warnings.
 const HEADER = [
-  'type','product_internal_id','product_sku','product_name','product_price',
-  'product_compare_to_price','product_is_inventory_tracked','product_quantity',
-  'product_quantity_out_of_stock_behaviour','product_low_stock_notification_quantity',
-  'product_quantity_minimum_allowed_for_purchase','product_quantity_maximum_allowed_for_purchase',
-  'product_is_available','product_media_main_image_url','product_media_main_image_alt',
-  'product_description','product_category_1','product_is_featured',
-  'product_is_featured_order_by','product_brand','product_upc','product_ribbon_text',
-  'product_ribbon_color','product_subtitle','product_weight','product_is_shipping_required',
-  'product_length','product_width','product_height',
-  'product_shipping_preparation_time_for_shipping_in_days',
-  'product_shipping_preparation_time_for_pickup_in_minutes',
-  'product_shipping_preparation_time_for_local_delivery_in_minutes',
-  'product_shipping_preparation_time_for_preorders_in_days',
-  'product_shipping_show_delivery_date_on_the_product_page',
-  'product_taxable','product_enabled_manual_taxes','product_tax_class_code',
-  'product_seo_title','product_seo_description','product_related_item_ids',
-  'product_related_item_skus','product_related_items_random',
-  'product_related_items_random_category','product_related_items_random_number_of_items',
-  'product_custom_price_enabled','product_google_product_category_code',
-  'product_option_name','product_option_type','product_option_is_required',
-  'product_option_value','product_option_markup','product_option_is_default_option_selection',
-  'product_option_swatch_hex_value','product_option_swatch_image',
-  'product_option_swatch_selector_is_image',
-  'product_variation_option_Registration','product_variation_option_Assistants',
-  'product_variation_option_Team Members','product_variation_sku',
-  'category_internal_id','category_path','category_is_available',
-  'category_description','category_seo_title','category_seo_description',
-  'category_image','category_image_alt','category_order_by',
-  'source_store_id','url','custom_url_slug',
+  'type',
+  'product_internal_id',
+  'product_sku',
+  'product_price',
+  'product_is_inventory_tracked',
+  'product_quantity',
+  'product_quantity_out_of_stock_behaviour',
+  'product_quantity_minimum_allowed_for_purchase',
+  'product_option_name',
+  'product_option_type',
+  'product_option_is_required',
+  'product_option_value',
+  'product_option_markup',
+  'product_option_is_default_option_selection',
+  'product_variation_option_Registration',
+  'product_variation_option_Assistants',
+  'product_variation_option_Team Members',
+  'product_variation_sku',
+  'source_store_id',
 ];
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -227,27 +218,27 @@ for (const [key, p] of Object.entries(PRODUCTS)) {
     for (let i = 0; i < p.dates.length; i++) {
       const d = p.dates[i];
       // Regular registration
-      allRows.push(makeOptionRow(p.id, p.sku, 'Registration', 'RADIOBUTTONS', true,
+      allRows.push(makeOptionRow(p.id, p.sku, 'Registration', 'radiobuttons', true,
         d.label, 0, i === 0 ? true : false));
       // Team Only registration
-      allRows.push(makeOptionRow(p.id, p.sku, 'Registration', 'RADIOBUTTONS', true,
+      allRows.push(makeOptionRow(p.id, p.sku, 'Registration', 'radiobuttons', true,
         `Team Only - ${d.label}`, 0, false));
     }
 
     // ── Team Members option values ──
-    allRows.push(makeOptionRow(p.id, p.sku, 'Team Members', 'RADIOBUTTONS', true,
+    allRows.push(makeOptionRow(p.id, p.sku, 'Team Members', 'radiobuttons', true,
       'None', 0, true));
     for (let n = 1; n <= p.maxTeamMembers; n++) {
       const label = n === 1 ? '1 Team Member' : `${n} Team Members`;
-      allRows.push(makeOptionRow(p.id, p.sku, 'Team Members', 'RADIOBUTTONS', true,
+      allRows.push(makeOptionRow(p.id, p.sku, 'Team Members', 'radiobuttons', true,
         label, 0, false));
     }
 
     // ── Digital Access option (DGS only) ──
     if (p.hasDigitalAccess) {
-      allRows.push(makeOptionRow(p.id, p.sku, 'Digital Access', 'DROPDOWN', true,
+      allRows.push(makeOptionRow(p.id, p.sku, 'Digital Access', 'dropdownlist', true,
         'No', 0, true));
-      allRows.push(makeOptionRow(p.id, p.sku, 'Digital Access', 'DROPDOWN', true,
+      allRows.push(makeOptionRow(p.id, p.sku, 'Digital Access', 'dropdownlist', true,
         'Yes', p.digitalAccessPrice, false));
     }
 
@@ -274,39 +265,39 @@ for (const [key, p] of Object.entries(PRODUCTS)) {
     for (let i = 0; i < p.dates.length; i++) {
       const d = p.dates[i];
       // Didactic & Live Patients
-      allRows.push(makeOptionRow(p.id, p.sku, 'Registration', 'RADIOBUTTONS', true,
+      allRows.push(makeOptionRow(p.id, p.sku, 'Registration', 'radiobuttons', true,
         `${d.label} - Didactic & Live Patients`, 0, i === 0 ? true : false));
       // Didactic Only
-      allRows.push(makeOptionRow(p.id, p.sku, 'Registration', 'RADIOBUTTONS', true,
+      allRows.push(makeOptionRow(p.id, p.sku, 'Registration', 'radiobuttons', true,
         `${d.label} - Didactic Only`, 0, false));
 
       if (p.hasMastermind) {
         // MasterMind - Didactic & Live Patients
-        allRows.push(makeOptionRow(p.id, p.sku, 'Registration', 'RADIOBUTTONS', true,
+        allRows.push(makeOptionRow(p.id, p.sku, 'Registration', 'radiobuttons', true,
           `${d.label} - Didactic & Live Patients - MasterMind`, 0, false));
         // MasterMind - Didactic Only (only if mastermindDoApplies)
         if (p.mastermindDoApplies) {
-          allRows.push(makeOptionRow(p.id, p.sku, 'Registration', 'RADIOBUTTONS', true,
+          allRows.push(makeOptionRow(p.id, p.sku, 'Registration', 'radiobuttons', true,
             `${d.label} - Didactic Only - MasterMind`, 0, false));
         }
       }
     }
 
     // ── Assistants option values ──
-    allRows.push(makeOptionRow(p.id, p.sku, 'Assistants', 'RADIOBUTTONS', true,
+    allRows.push(makeOptionRow(p.id, p.sku, 'Assistants', 'radiobuttons', true,
       'None', 0, true));
     for (let n = 1; n <= p.maxAssistants; n++) {
       const label = n === 1 ? '1 Assistant' : `${n} Assistants`;
-      allRows.push(makeOptionRow(p.id, p.sku, 'Assistants', 'RADIOBUTTONS', true,
+      allRows.push(makeOptionRow(p.id, p.sku, 'Assistants', 'radiobuttons', true,
         label, 0, false));
     }
 
     // ── MasterMind Member? dropdown ──
     if (p.hasMastermind) {
       // NO price markup — pricing is handled via variation (Path B)
-      allRows.push(makeOptionRow(p.id, p.sku, 'MasterMind Member?', 'DROPDOWN', true,
+      allRows.push(makeOptionRow(p.id, p.sku, 'MasterMind Member?', 'dropdownlist', true,
         'No', 0, true));
-      allRows.push(makeOptionRow(p.id, p.sku, 'MasterMind Member?', 'DROPDOWN', true,
+      allRows.push(makeOptionRow(p.id, p.sku, 'MasterMind Member?', 'dropdownlist', true,
         'Yes', 0, false));
     }
 

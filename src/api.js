@@ -17,25 +17,29 @@ const priceCache = new Map();
  * Public tokens are non-secret (read-only access to public product data).
  */
 function getPublicToken() {
-  try {
-    return Ecwid.getAppPublicToken(APP_ID);
-  } catch (_e) {
-    // Fallback: try the global storefront public token
+  // Try the app-specific token first, then empty string (store-level public token)
+  const attempts = [APP_ID, ''];
+  for (const id of attempts) {
     try {
-      return Ecwid.getAppPublicToken('');
-    } catch (_e2) {
-      return null;
-    }
+      const token = Ecwid.getAppPublicToken(id);
+      if (token) {
+        console.log('[3D-Dentists] Got public token via appId:', JSON.stringify(id));
+        return token;
+      }
+    } catch (_e) { /* try next */ }
   }
+  return null;
 }
 
 /**
  * Fetch a product's data from the Ecwid REST API.
- * Returns the product object with combinations, or null on failure.
+ * Uses Bearer header auth (required for modern Ecwid API).
  */
 async function fetchProduct(productId, token) {
-  const url = `https://app.ecwid.com/api/v3/${STORE_ID}/products/${productId}?token=${token}`;
-  const resp = await fetch(url);
+  const url = `https://app.ecwid.com/api/v3/${STORE_ID}/products/${productId}`;
+  const resp = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
   return resp.json();
 }

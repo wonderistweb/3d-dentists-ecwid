@@ -77,7 +77,7 @@ const PRODUCTS = {
     sku: '3D-AGS-001',
     name: 'AGS',
     basePrice: 17995,    // Didactic & Live Patients
-    doPrice: 5995,       // Didactic Only
+    doPrice: 3995,       // Didactic Only
     dates: [
       { label: 'Apr 20-24 2026', code: 'APR' },
     ],
@@ -95,7 +95,7 @@ const PRODUCTS = {
     sku: '3D-FAE-001',
     name: 'Full Arch Express',
     basePrice: 18995,
-    doPrice: 5995,
+    doPrice: 3995,
     dates: [
       { label: 'Aug 3-7 2026', code: 'AUG' },
       { label: 'Oct 26-30 2026', code: 'OCT' },

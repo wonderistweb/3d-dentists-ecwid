@@ -105,7 +105,7 @@ describe('calcAssistantPrice', () => {
 
   it('1 doctor, didactic only, no MM', () => {
     const result = calcAssistantPrice(ags, 1, 0, { isDidacticOnly: true });
-    expect(result.total).toBe(5995);
+    expect(result.total).toBe(3995);
   });
 
   it('1 doctor, live patients, MasterMind', () => {
@@ -130,7 +130,7 @@ describe('calcAssistantPrice', () => {
   it('didactic only + MasterMind applies for AGS', () => {
     const result = calcAssistantPrice(ags, 1, 0, { isMastermind: true, isDidacticOnly: true });
     // AGS has no mastermindDoApplies flag (defaults to true)
-    expect(result.total).toBe(5995 - 3000);
+    expect(result.total).toBe(3995 - 3000);
   });
 
   it('TRT didactic only + MasterMind does NOT apply', () => {
@@ -189,7 +189,7 @@ describe('calculatePrice', () => {
       assistants: 1,
       registration: 'Apr 20-24 2026 - Didactic Only',
     });
-    expect(result.total).toBe(5995 + 1495);
+    expect(result.total).toBe(3995 + 1495);
   });
 
   it('dispatches simple course', () => {

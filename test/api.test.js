@@ -74,12 +74,12 @@ describe('derivePrices — assistants', () => {
     combinations: [
       makeCombo([['Registration', 'Apr 20-24 2026 - Didactic & Live Patients'], ['Assistants', 'None']], 17995),
       makeCombo([['Registration', 'Apr 20-24 2026 - Didactic & Live Patients'], ['Assistants', '1 Assistant']], 19490),
-      makeCombo([['Registration', 'Apr 20-24 2026 - Didactic Only'], ['Assistants', 'None']], 5995),
-      makeCombo([['Registration', 'Apr 20-24 2026 - Didactic Only'], ['Assistants', '1 Assistant']], 7490),
+      makeCombo([['Registration', 'Apr 20-24 2026 - Didactic Only'], ['Assistants', 'None']], 3995),
+      makeCombo([['Registration', 'Apr 20-24 2026 - Didactic Only'], ['Assistants', '1 Assistant']], 5490),
       makeCombo([['Registration', 'Apr 20-24 2026 - Didactic & Live Patients - MasterMind'], ['Assistants', 'None']], 14995),
       makeCombo([['Registration', 'Apr 20-24 2026 - Didactic & Live Patients - MasterMind'], ['Assistants', '1 Assistant']], 15990),
-      makeCombo([['Registration', 'Apr 20-24 2026 - Didactic Only - MasterMind'], ['Assistants', 'None']], 2995),
-      makeCombo([['Registration', 'Apr 20-24 2026 - Didactic Only - MasterMind'], ['Assistants', '1 Assistant']], 3990),
+      makeCombo([['Registration', 'Apr 20-24 2026 - Didactic Only - MasterMind'], ['Assistants', 'None']], 995),
+      makeCombo([['Registration', 'Apr 20-24 2026 - Didactic Only - MasterMind'], ['Assistants', '1 Assistant']], 1990),
     ],
   };
 
@@ -90,7 +90,7 @@ describe('derivePrices — assistants', () => {
 
   it('derives didacticOnlyPrice', () => {
     const prices = derivePrices(config, product);
-    expect(prices.didacticOnlyPrice).toBe(5995);
+    expect(prices.didacticOnlyPrice).toBe(3995);
   });
 
   it('derives assistantPrice from DO delta', () => {

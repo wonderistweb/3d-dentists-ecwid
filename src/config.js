@@ -76,7 +76,7 @@ export const COURSE_CONFIG = {
   '3D-AGS-001': {
     type: 'assistants',
     doctorPrice: 17995,          // Didactic & Live Patients base
-    didacticOnlyPrice: 5995,     // Didactic Only base
+    didacticOnlyPrice: 3995,     // Didactic Only base
     assistantPrice: 1495,        // standard per-assistant rate
     assistantPriceMM: 995,       // MasterMind rate
     maxAssistants: 5,
@@ -88,7 +88,7 @@ export const COURSE_CONFIG = {
   '3D-FAE-001': {
     type: 'assistants',
     doctorPrice: 18995,
-    didacticOnlyPrice: 5995,
+    didacticOnlyPrice: 3995,
     assistantPrice: 1495,
     assistantPriceMM: 995,
     maxAssistants: 5,

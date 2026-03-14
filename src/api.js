@@ -203,6 +203,15 @@ export async function fetchProductPrices(productId, baseConfig) {
     }
 
     const product = await fetchProduct(productId, token);
+
+    // Debug: log what the API returned so we can see the actual shape
+    console.log('[3D-Dentists] API product keys:', Object.keys(product));
+    console.log('[3D-Dentists] product.price:', product.price);
+    console.log('[3D-Dentists] combinations count:', (product.combinations || []).length);
+    if (product.combinations && product.combinations.length > 0) {
+      console.log('[3D-Dentists] First combination:', JSON.stringify(product.combinations[0]));
+    }
+
     const prices = derivePrices(baseConfig, product);
 
     if (Object.keys(prices).length > 0) {

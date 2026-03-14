@@ -33,7 +33,7 @@ export const COURSE_CONFIG = {
 
   '3D-DGS-001': {
     type: 'teamMembers',
-    doctorPrice: 1995,
+    doctorPrice: 2495,
     teamMemberPrice: 1295,
     maxTeamMembers: 20,
     hasMastermind: false,

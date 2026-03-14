@@ -36,13 +36,13 @@ describe('calcTeamMemberPrice', () => {
 
   it('1 doctor, 0 team members', () => {
     const result = calcTeamMemberPrice(dgs, 1, 0);
-    expect(result.total).toBe(1995);
+    expect(result.total).toBe(2495);
     expect(result.breakdown).toHaveLength(1);
   });
 
   it('1 doctor, 3 team members', () => {
     const result = calcTeamMemberPrice(dgs, 1, 3);
-    expect(result.total).toBe(1995 + 3 * 1295);
+    expect(result.total).toBe(2495 + 3 * 1295);
     expect(result.breakdown).toHaveLength(2);
   });
 
@@ -60,7 +60,7 @@ describe('calcTeamMemberPrice', () => {
 
   it('digital access add-on (DGS)', () => {
     const result = calcTeamMemberPrice(dgs, 1, 0, { digitalAccess: true });
-    expect(result.total).toBe(1995 + 395);
+    expect(result.total).toBe(2495 + 395);
     expect(result.breakdown).toHaveLength(2);
     expect(result.breakdown[1].label).toBe('Digital Access');
   });
@@ -154,7 +154,7 @@ describe('calculatePrice', () => {
       teamMembers: 3,
       registration: 'Apr 30 - May 1 2026 - Orlando FL',
     });
-    expect(result.total).toBe(2 * 1995 + 3 * 1295);
+    expect(result.total).toBe(2 * 2495 + 3 * 1295);
   });
 
   it('dispatches assistant course with MasterMind', () => {

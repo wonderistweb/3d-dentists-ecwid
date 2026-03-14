@@ -18,7 +18,7 @@ const PRODUCTS = {
     id: 817675365,
     sku: '3D-DGS-001',
     name: '3D Dentists Growth Summit',
-    basePrice: 1995,
+    basePrice: 2495,
     dates: [
       { label: 'Apr 30 - May 1 2026 - Orlando FL', code: 'APR' },
     ],

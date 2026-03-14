@@ -15,7 +15,10 @@
  *   Body: { "productId": "817675365" }   ← optional, omit to sync all
  *         { "dryRun": true }             ← optional, preview without updating
  *
- * Can also be triggered by Webflow CMS webhooks (auto-detects payload format).
+ * Webflow webhook:
+ *   POST /api/sync-prices?secret={SYNC_SECRET}
+ *   Automatically triggered when CMS items are published in Webflow.
+ *   Detects webhook payload and runs a full sync.
  */
 
 const ECWID_STORE_ID = 131073255;
@@ -333,7 +336,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed. Use POST.' });
   }
 
-  // Auth check
+  // Auth check — accept Bearer header, body secret, or query param secret (for webhooks)
   const syncSecret = process.env.SYNC_SECRET;
   if (!syncSecret) {
     return res.status(500).json({ error: 'SYNC_SECRET not configured' });
@@ -341,13 +344,15 @@ export default async function handler(req, res) {
 
   const authHeader = req.headers.authorization || '';
   const providedSecret = authHeader.replace(/^Bearer\s+/i, '');
-
-  // Also check body for webhook-style auth
+  const querySecret = req.query?.secret;
   const bodySecret = req.body?.secret;
 
-  if (providedSecret !== syncSecret && bodySecret !== syncSecret) {
+  if (providedSecret !== syncSecret && bodySecret !== syncSecret && querySecret !== syncSecret) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
+
+  // Detect Webflow webhook payload
+  const isWebhook = !!(req.body?.triggerType || req.body?._id);
 
   // Check required env vars
   const webflowToken = process.env.WEBFLOW_API_TOKEN;
@@ -356,9 +361,9 @@ export default async function handler(req, res) {
   if (!webflowToken) return res.status(500).json({ error: 'WEBFLOW_API_TOKEN not configured' });
   if (!ecwidToken) return res.status(500).json({ error: 'ECWID_SECRET_TOKEN not configured' });
 
-  // Parse request options
-  const targetProductId = req.body?.productId || null; // sync specific product or all
-  const dryRun = req.body?.dryRun === true;
+  // Parse request options (webhooks always sync all products, never dry run)
+  const targetProductId = isWebhook ? null : (req.body?.productId || null);
+  const dryRun = isWebhook ? false : (req.body?.dryRun === true);
 
   try {
     // 1. Fetch Webflow CMS data

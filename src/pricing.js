@@ -53,9 +53,9 @@ export function calcTeamMemberPrice(config, doctors, teamMembers, opts = {}) {
     });
   }
 
-  if (opts.digitalAccess && config.hasDigitalAccess) {
-    total += 395;
-    breakdown.push({ label: 'Digital Access', amount: 395 });
+  if (opts.digitalAccess && config.hasDigitalAccess && config.digitalAccessPrice) {
+    total += config.digitalAccessPrice;
+    breakdown.push({ label: 'Digital Access', amount: config.digitalAccessPrice });
   }
 
   return { total, breakdown };

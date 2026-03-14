@@ -655,7 +655,7 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
       daLabel.textContent = 'Digital Access';
       daBox.appendChild(daLabel);
       const daPrice = el('span', `${PREFIX}-da-price`);
-      daPrice.textContent = '+$395';
+      daPrice.textContent = `+$${config.digitalAccessPrice ? config.digitalAccessPrice.toLocaleString('en-US') : '395'}`;
       daBox.appendChild(daPrice);
       daBox.addEventListener('click', (e) => {
         if (e.target !== cb) {

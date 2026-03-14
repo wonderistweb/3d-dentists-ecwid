@@ -38,7 +38,8 @@ export const COURSE_CONFIG = {
     maxTeamMembers: 20,
     hasMastermind: false,
     hasLivePatient: false,
-    hasDigitalAccess: true, // Digital Access checkbox add-on ($395)
+    hasDigitalAccess: true,
+    digitalAccessPrice: 395, // fallback — overridden by API at runtime
   },
 
   '3D-SD-001': {

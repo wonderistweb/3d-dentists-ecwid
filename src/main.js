@@ -6,6 +6,7 @@
  */
 import { COURSE_CONFIG, PRODUCT_ID_MAP } from './config.js';
 import { renderWidget, parseRegistrationOptions } from './ui.js';
+import { fetchProductPrices } from './api.js';
 
 (function init() {
   // Guard: Ecwid must exist
@@ -18,34 +19,36 @@ import { renderWidget, parseRegistrationOptions } from './ui.js';
     Ecwid.OnPageLoaded.add(function (page) {
       if (page.type !== 'PRODUCT') return;
 
-      try {
-        handleProductPage(page.productId);
-      } catch (e) {
+      handleProductPage(page.productId).catch((e) => {
         console.error('[3D-Dentists] Error rendering custom UI:', e);
         // On error, leave Ecwid's native UI visible (graceful degradation)
-      }
+      });
     });
   });
 })();
 
 /**
  * Called when a product page renders.
- * Looks up SKU via product ID map, then renders custom widget.
+ * Looks up SKU via product ID map, fetches live prices from Ecwid API,
+ * then renders the custom widget with up-to-date pricing.
  */
-function handleProductPage(productId) {
+async function handleProductPage(productId) {
   const sku = PRODUCT_ID_MAP[productId];
   if (!sku) {
     // Unknown product — leave native UI intact
     return;
   }
 
-  const config = COURSE_CONFIG[sku];
-  if (!config) {
+  const baseConfig = COURSE_CONFIG[sku];
+  if (!baseConfig) {
     return;
   }
 
+  // Start API fetch immediately (runs in parallel with DOM polling)
+  const pricesPromise = fetchProductPrices(productId, baseConfig);
+
   // Wait for native options to render (Ecwid renders async)
-  waitForElement('.product-details__product-options', (nativeOptions) => {
+  waitForElement('.product-details__product-options', async (nativeOptions) => {
     // Find Registration option container by class
     const regContainer = nativeOptions.querySelector('.details-product-option--Registration');
     const allOptions = parseRegistrationOptions(regContainer);
@@ -54,6 +57,10 @@ function handleProductPage(productId) {
       console.warn('[3D-Dentists] No registration options found for', sku);
       return;
     }
+
+    // Merge fetched prices into config (config.js values serve as fallback)
+    const livePrices = await pricesPromise;
+    const config = { ...baseConfig, ...livePrices };
 
     console.log('[3D-Dentists] Rendering custom UI for', sku, '— found', allOptions.length, 'registration options');
     renderWidget(nativeOptions, config, productId, allOptions);

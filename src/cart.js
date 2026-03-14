@@ -87,6 +87,22 @@ export async function addToCart(productId, config, state, allOptions, callback) 
     const registration = getCartRegistration(state);
     const doctors = state.doctors;
 
+    // Digital Access Only — flat purchase, no doctor/TM tickets
+    if (/^digital access only$/i.test(state.registration)) {
+      const options = {
+        Registration: 'Digital Access Only',
+        'Team Members': 'None',
+      };
+      attachRequiredOptions(options, config, { ...state, digitalAccess: true });
+      const success = await ecwidAddProduct({
+        id: productId,
+        quantity: 1,
+        options,
+      });
+      callback(success);
+      return;
+    }
+
     if (config.type === 'simple') {
       // Simple: just registration + quantity
       const options = attachRequiredOptions({ Registration: registration }, config, state);

@@ -23,7 +23,7 @@ const PRODUCTS = {
       { label: 'Apr 30 - May 1 2026 - Orlando FL', code: 'APR' },
     ],
     type: 'teamMembers',
-    teamMemberPrice: 1295,
+    teamMemberPrice: 1495,
     maxTeamMembers: 20,
     hasDigitalAccess: true,
     digitalAccessPrice: 395,
@@ -236,6 +236,10 @@ for (const [key, p] of Object.entries(PRODUCTS)) {
 
     // ── Digital Access option (DGS only) ──
     if (p.hasDigitalAccess) {
+      // "Digital Access Only" registration option
+      allRows.push(makeOptionRow(p.id, p.sku, 'Registration', 'radiobuttons', true,
+        'Digital Access Only', 0, false));
+
       allRows.push(makeOptionRow(p.id, p.sku, 'Digital Access', 'dropdownlist', true,
         'No', 0, true));
       allRows.push(makeOptionRow(p.id, p.sku, 'Digital Access', 'dropdownlist', true,
@@ -259,6 +263,12 @@ for (const [key, p] of Object.entries(PRODUCTS)) {
         allRows.push(makeVariationRow(p.id, p.sku, price, varSku,
           `Team Only - ${d.label}`, null, tmLabel));
       }
+    }
+
+    // Digital Access Only variation: $0 base + Digital Access markup ($395) handles pricing
+    if (p.hasDigitalAccess) {
+      allRows.push(makeVariationRow(p.id, p.sku, 0, `${p.sku}-DA-ONLY`,
+        'Digital Access Only', null, 'None'));
     }
   } else if (p.type === 'assistants') {
     // ── Registration option values ──

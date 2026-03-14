@@ -18,6 +18,13 @@ export function isTeamOnly(registrationValue) {
 }
 
 /**
+ * Detect whether a registration value is "Digital Access Only" (no in-person attendance).
+ */
+export function isDigitalAccessOnly(registrationValue) {
+  return /^digital access only$/i.test(registrationValue);
+}
+
+/**
  * Calculate total price for a team-member course (DGS, SD, CAA, SAI).
  *
  * @param {object} config - Course config from COURSE_CONFIG
@@ -30,6 +37,13 @@ export function isTeamOnly(registrationValue) {
 export function calcTeamMemberPrice(config, doctors, teamMembers, opts = {}) {
   const breakdown = [];
   let total = 0;
+
+  // Digital Access Only — flat price, no doctor/TM tickets
+  if (opts.digitalAccessOnly && config.hasDigitalAccess && config.digitalAccessPrice) {
+    total = config.digitalAccessPrice;
+    breakdown.push({ label: 'Digital Access', amount: config.digitalAccessPrice });
+    return { total, breakdown };
+  }
 
   if (doctors > 0) {
     const doctorSubtotal = doctors * config.doctorPrice;
@@ -158,10 +172,11 @@ export function calcSimplePrice(config, doctors) {
 export function calculatePrice(config, state) {
   const { doctors, teamMembers = 0, assistants = 0, isMastermind = false, digitalAccess = false, registration = '' } = state;
   const didacticOnly = isDidacticOnly(registration);
+  const daOnly = isDigitalAccessOnly(registration);
 
   switch (config.type) {
     case 'teamMembers':
-      return calcTeamMemberPrice(config, doctors, teamMembers, { digitalAccess });
+      return calcTeamMemberPrice(config, doctors, teamMembers, { digitalAccess, digitalAccessOnly: daOnly });
     case 'assistants':
       return calcAssistantPrice(config, doctors, assistants, { isMastermind, isDidacticOnly: didacticOnly });
     case 'simple':

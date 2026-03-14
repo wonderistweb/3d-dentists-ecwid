@@ -3,7 +3,7 @@
  * Reads registration options from Ecwid DOM, then replaces the native options
  * section with our custom UI.
  */
-import { calculatePrice, isDidacticOnly, fmt } from './pricing.js';
+import { calculatePrice, isDidacticOnly, isDigitalAccessOnly, fmt } from './pricing.js';
 import { addToCart } from './cart.js';
 
 const PREFIX = 'td3';
@@ -556,9 +556,10 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
     widget.appendChild(regSection);
 
     const isDO = isDidacticOnly(state.registration);
+    const isDAOnly = isDigitalAccessOnly(state.registration);
 
     // MasterMind toggle (only for courses that have it, and not for didactic-only when excluded)
-    const showMM = config.hasMastermind && !(isDO && config.mastermindDoApplies === false);
+    const showMM = config.hasMastermind && !isDAOnly && !(isDO && config.mastermindDoApplies === false);
     if (showMM) {
       const mmBox = el('div', `${PREFIX}-mm-box`);
       const mmLeft = el('div', `${PREFIX}-mm-left`);
@@ -582,8 +583,13 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
       state.isMastermind = false;
     }
 
-    // Steppers section
-    if (config.type === 'teamMembers') {
+    // Steppers section (hidden for Digital Access Only)
+    if (isDAOnly) {
+      // No steppers — Digital Access Only is a flat-price item
+      state.doctors = 0;
+      state.teamMembers = 0;
+      state.digitalAccess = false;
+    } else if (config.type === 'teamMembers') {
       // Doctor stepper — min 0 allows team-only mode
       const docRate = config.doctorPrice;
       widget.appendChild(
@@ -640,8 +646,8 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
       );
     }
 
-    // Digital Access checkbox (DGS only)
-    if (config.hasDigitalAccess) {
+    // Digital Access checkbox (DGS only, hidden when Digital Access Only is selected)
+    if (config.hasDigitalAccess && !isDAOnly) {
       const daBox = el('div', `${PREFIX}-da-box`);
       const cb = document.createElement('input');
       cb.type = 'checkbox';
@@ -806,6 +812,7 @@ function stepper(name, rateText, value, min, max, capLabel, onChange) {
 }
 
 function validateOrder(config, state) {
+  if (isDigitalAccessOnly(state.registration)) return true;
   if (config.type === 'simple') return state.doctors >= 1;
   if (config.type === 'teamMembers') return state.doctors > 0 || state.teamMembers > 0;
   if (config.type === 'assistants') return state.doctors >= 1;

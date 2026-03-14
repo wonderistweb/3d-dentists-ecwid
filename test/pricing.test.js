@@ -6,6 +6,7 @@ import {
   calculatePrice,
   isDidacticOnly,
   isTeamOnly,
+  isDigitalAccessOnly,
   fmt,
 } from '../src/pricing.js';
 import { COURSE_CONFIG } from '../src/config.js';
@@ -28,6 +29,14 @@ describe('isTeamOnly', () => {
   });
 });
 
+describe('isDigitalAccessOnly', () => {
+  it('detects "Digital Access Only" registration value', () => {
+    expect(isDigitalAccessOnly('Digital Access Only')).toBe(true);
+    expect(isDigitalAccessOnly('digital access only')).toBe(true);
+    expect(isDigitalAccessOnly('Apr 30 - May 1 2026 - Orlando FL')).toBe(false);
+  });
+});
+
 // ─── Team Member courses ──────────────────────────────────────────────────────
 
 describe('calcTeamMemberPrice', () => {
@@ -42,13 +51,13 @@ describe('calcTeamMemberPrice', () => {
 
   it('1 doctor, 3 team members', () => {
     const result = calcTeamMemberPrice(dgs, 1, 3);
-    expect(result.total).toBe(2495 + 3 * 1295);
+    expect(result.total).toBe(2495 + 3 * 1495);
     expect(result.breakdown).toHaveLength(2);
   });
 
   it('0 doctors, 5 team members (team only)', () => {
     const result = calcTeamMemberPrice(dgs, 0, 5);
-    expect(result.total).toBe(5 * 1295);
+    expect(result.total).toBe(5 * 1495);
     expect(result.breakdown).toHaveLength(1);
     expect(result.breakdown[0].label).toContain('Team Members');
   });
@@ -68,6 +77,13 @@ describe('calcTeamMemberPrice', () => {
   it('digital access ignored for non-DGS', () => {
     const result = calcTeamMemberPrice(sd, 1, 0, { digitalAccess: true });
     expect(result.total).toBe(3495); // no +395
+  });
+
+  it('digital access only (standalone, no doctor/TM)', () => {
+    const result = calcTeamMemberPrice(dgs, 0, 0, { digitalAccessOnly: true });
+    expect(result.total).toBe(395);
+    expect(result.breakdown).toHaveLength(1);
+    expect(result.breakdown[0].label).toBe('Digital Access');
   });
 });
 
@@ -154,7 +170,7 @@ describe('calculatePrice', () => {
       teamMembers: 3,
       registration: 'Apr 30 - May 1 2026 - Orlando FL',
     });
-    expect(result.total).toBe(2 * 2495 + 3 * 1295);
+    expect(result.total).toBe(2 * 2495 + 3 * 1495);
   });
 
   it('dispatches assistant course with MasterMind', () => {
@@ -183,6 +199,16 @@ describe('calculatePrice', () => {
     });
     expect(result.total).toBe(12995);
   });
+
+  it('dispatches Digital Access Only for DGS', () => {
+    const result = calculatePrice(COURSE_CONFIG['3D-DGS-001'], {
+      doctors: 0,
+      teamMembers: 0,
+      registration: 'Digital Access Only',
+    });
+    expect(result.total).toBe(395);
+    expect(result.breakdown).toHaveLength(1);
+  });
 });
 
 // ─── Formatting ───────────────────────────────────────────────────────────────
@@ -190,7 +216,7 @@ describe('calculatePrice', () => {
 describe('fmt', () => {
   it('formats numbers with commas', () => {
     expect(fmt(17995)).toBe('17,995');
-    expect(fmt(1295)).toBe('1,295');
+    expect(fmt(1495)).toBe('1,495');
     expect(fmt(395)).toBe('395');
     expect(fmt(0)).toBe('0');
   });

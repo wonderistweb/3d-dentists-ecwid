@@ -23,10 +23,10 @@ describe('derivePrices — teamMembers', () => {
     price: 2495,
     combinations: [
       makeCombo([['Registration', 'Apr 30 - May 1 2026 - Orlando FL'], ['Team Members', 'None']], 2495),
-      makeCombo([['Registration', 'Apr 30 - May 1 2026 - Orlando FL'], ['Team Members', '1 Team Member']], 3790),
-      makeCombo([['Registration', 'Apr 30 - May 1 2026 - Orlando FL'], ['Team Members', '2 Team Members']], 5085),
+      makeCombo([['Registration', 'Apr 30 - May 1 2026 - Orlando FL'], ['Team Members', '1 Team Member']], 3990),
+      makeCombo([['Registration', 'Apr 30 - May 1 2026 - Orlando FL'], ['Team Members', '2 Team Members']], 5485),
       makeCombo([['Registration', 'Team Only - Apr 30 - May 1 2026 - Orlando FL'], ['Team Members', 'None']], 0),
-      makeCombo([['Registration', 'Team Only - Apr 30 - May 1 2026 - Orlando FL'], ['Team Members', '1 Team Member']], 1295),
+      makeCombo([['Registration', 'Team Only - Apr 30 - May 1 2026 - Orlando FL'], ['Team Members', '1 Team Member']], 1495),
     ],
     options: [
       {
@@ -46,7 +46,7 @@ describe('derivePrices — teamMembers', () => {
 
   it('derives teamMemberPrice from delta', () => {
     const prices = derivePrices(config, product);
-    expect(prices.teamMemberPrice).toBe(1295);
+    expect(prices.teamMemberPrice).toBe(1495);
   });
 
   it('derives digitalAccessPrice from option markup', () => {

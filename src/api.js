@@ -4,6 +4,13 @@
  *
  * This eliminates the need to hardcode prices in config.js. The widget
  * always displays prices matching what Ecwid will actually charge.
+ *
+ * Ecwid API combination shape:
+ *   { options: [ { name: "Registration", value: "..." }, { name: "Team Members", value: "None" } ],
+ *     price: 2495, sku: "...", ... }
+ *
+ * Ecwid API product.options shape:
+ *   [ { name: "Digital Access", type: "SELECT", choices: [ { text: "Yes", priceModifier: 395 } ] } ]
  */
 
 const STORE_ID = 131073255;
@@ -17,15 +24,11 @@ const priceCache = new Map();
  * Public tokens are non-secret (read-only access to public product data).
  */
 function getPublicToken() {
-  // Try the app-specific token first, then empty string (store-level public token)
   const attempts = [APP_ID, ''];
   for (const id of attempts) {
     try {
       const token = Ecwid.getAppPublicToken(id);
-      if (token) {
-        console.log('[3D-Dentists] Got public token via appId:', JSON.stringify(id));
-        return token;
-      }
+      if (token) return token;
     } catch (_e) { /* try next */ }
   }
   return null;
@@ -45,22 +48,17 @@ async function fetchProduct(productId, token) {
 }
 
 /**
+ * Extract an option value from a combination's options array.
+ * Ecwid returns options as: [{ name: "Registration", value: "..." }, ...]
+ */
+function getOpt(combo, optionName) {
+  if (!combo || !combo.options) return undefined;
+  const opt = combo.options.find((o) => o.name === optionName);
+  return opt ? opt.value : undefined;
+}
+
+/**
  * Derive all price fields from the product's combinations (variations).
- *
- * For teamMembers courses:
- *   - doctorPrice: base variation price (regular date, "None" team members)
- *   - teamMemberPrice: delta from base to "1 Team Member" variation
- *   - digitalAccessPrice: from Digital Access option markup (if present)
- *
- * For assistants courses:
- *   - doctorPrice: Didactic & Live Patients base
- *   - didacticOnlyPrice: Didactic Only base
- *   - assistantPrice: delta from DO base to "1 Assistant"
- *   - mastermindDiscount: LP base minus MasterMind LP base
- *   - assistantPriceMM: delta from MasterMind base to "1 Assistant"
- *
- * For simple courses:
- *   - doctorPrice: product's base price
  *
  * @param {object} config - Base course config (type, flags, caps)
  * @param {object} product - Ecwid API product response
@@ -78,7 +76,7 @@ export function derivePrices(config, product) {
   }
 
   if (config.type === 'assistants') {
-    return deriveAssistantPrices(config, product, combos);
+    return deriveAssistantPrices(config, combos);
   }
 
   return {};
@@ -86,31 +84,25 @@ export function derivePrices(config, product) {
 
 function deriveTeamMemberPrices(config, product, combos) {
   // Find a regular registration (not "Team Only") with "None" team members
-  const baseCombo = combos.find(
-    (c) =>
-      c.options &&
-      c.options['Registration'] &&
-      !c.options['Registration'].startsWith('Team Only') &&
-      c.options['Team Members'] === 'None',
-  );
+  const baseCombo = combos.find((c) => {
+    const reg = getOpt(c, 'Registration');
+    const tm = getOpt(c, 'Team Members');
+    return reg && !reg.startsWith('Team Only') && tm === 'None';
+  });
   if (!baseCombo) return {};
 
   const doctorPrice = baseCombo.price;
+  const baseReg = getOpt(baseCombo, 'Registration');
 
   // Find the same registration with "1 Team Member"
-  const oneTmCombo = combos.find(
-    (c) =>
-      c.options &&
-      c.options['Registration'] === baseCombo.options['Registration'] &&
-      c.options['Team Members'] === '1 Team Member',
+  const oneTmCombo = combos.find((c) =>
+    getOpt(c, 'Registration') === baseReg && getOpt(c, 'Team Members') === '1 Team Member',
   );
 
-  const teamMemberPrice = oneTmCombo ? oneTmCombo.price - doctorPrice : undefined;
-
-  // Digital Access price from option markup
   const result = { doctorPrice };
-  if (teamMemberPrice != null) result.teamMemberPrice = teamMemberPrice;
+  if (oneTmCombo) result.teamMemberPrice = oneTmCombo.price - doctorPrice;
 
+  // Digital Access price from product-level option markup
   if (config.hasDigitalAccess && product.options) {
     const daOption = product.options.find((o) => o.name === 'Digital Access');
     if (daOption && daOption.choices) {
@@ -124,56 +116,46 @@ function deriveTeamMemberPrices(config, product, combos) {
   return result;
 }
 
-function deriveAssistantPrices(config, product, combos) {
+function deriveAssistantPrices(config, combos) {
   // Didactic & Live Patients base (not MasterMind)
-  const lpBase = combos.find(
-    (c) =>
-      c.options &&
-      /Didactic & Live Patients$/.test(c.options['Registration']) &&
-      c.options['Assistants'] === 'None',
-  );
+  const lpBase = combos.find((c) => {
+    const reg = getOpt(c, 'Registration');
+    return reg && /Didactic & Live Patients$/.test(reg) && getOpt(c, 'Assistants') === 'None';
+  });
 
   // Didactic Only base (not MasterMind)
-  const doBase = combos.find(
-    (c) =>
-      c.options &&
-      /Didactic Only$/.test(c.options['Registration']) &&
-      c.options['Assistants'] === 'None',
-  );
+  const doBase = combos.find((c) => {
+    const reg = getOpt(c, 'Registration');
+    return reg && /Didactic Only$/.test(reg) && getOpt(c, 'Assistants') === 'None';
+  });
 
   if (!lpBase || !doBase) return {};
 
   const doctorPrice = lpBase.price;
   const didacticOnlyPrice = doBase.price;
+  const doReg = getOpt(doBase, 'Registration');
 
   // Assistant price from DO base → "1 Assistant" delta
-  const doOneAsst = combos.find(
-    (c) =>
-      c.options &&
-      c.options['Registration'] === doBase.options['Registration'] &&
-      c.options['Assistants'] === '1 Assistant',
+  const doOneAsst = combos.find((c) =>
+    getOpt(c, 'Registration') === doReg && getOpt(c, 'Assistants') === '1 Assistant',
   );
-  const assistantPrice = doOneAsst ? doOneAsst.price - didacticOnlyPrice : undefined;
 
   const result = { doctorPrice, didacticOnlyPrice };
-  if (assistantPrice != null) result.assistantPrice = assistantPrice;
+  if (doOneAsst) result.assistantPrice = doOneAsst.price - didacticOnlyPrice;
 
   // MasterMind pricing
   if (config.hasMastermind) {
-    const mmLpBase = combos.find(
-      (c) =>
-        c.options &&
-        /Didactic & Live Patients - MasterMind$/.test(c.options['Registration']) &&
-        c.options['Assistants'] === 'None',
-    );
+    const lpReg = getOpt(lpBase, 'Registration');
+    const mmLpBase = combos.find((c) => {
+      const reg = getOpt(c, 'Registration');
+      return reg && /Didactic & Live Patients - MasterMind$/.test(reg) && getOpt(c, 'Assistants') === 'None';
+    });
     if (mmLpBase) {
       result.mastermindDiscount = doctorPrice - mmLpBase.price;
+      const mmReg = getOpt(mmLpBase, 'Registration');
 
-      const mmOneAsst = combos.find(
-        (c) =>
-          c.options &&
-          c.options['Registration'] === mmLpBase.options['Registration'] &&
-          c.options['Assistants'] === '1 Assistant',
+      const mmOneAsst = combos.find((c) =>
+        getOpt(c, 'Registration') === mmReg && getOpt(c, 'Assistants') === '1 Assistant',
       );
       if (mmOneAsst) {
         result.assistantPriceMM = mmOneAsst.price - mmLpBase.price;
@@ -187,10 +169,6 @@ function deriveAssistantPrices(config, product, combos) {
 /**
  * Fetch product prices, derive them from variations, and cache the result.
  * Falls back to an empty object on failure (config.js defaults will be used).
- *
- * @param {number} productId - Ecwid product ID
- * @param {object} baseConfig - Course config from COURSE_CONFIG
- * @returns {Promise<object>} Derived price fields
  */
 export async function fetchProductPrices(productId, baseConfig) {
   if (priceCache.has(productId)) return priceCache.get(productId);
@@ -203,20 +181,11 @@ export async function fetchProductPrices(productId, baseConfig) {
     }
 
     const product = await fetchProduct(productId, token);
-
-    // Debug: log what the API returned so we can see the actual shape
-    console.log('[3D-Dentists] API product keys:', Object.keys(product));
-    console.log('[3D-Dentists] product.price:', product.price);
-    console.log('[3D-Dentists] combinations count:', (product.combinations || []).length);
-    if (product.combinations && product.combinations.length > 0) {
-      console.log('[3D-Dentists] First combination:', JSON.stringify(product.combinations[0]));
-    }
-
     const prices = derivePrices(baseConfig, product);
 
     if (Object.keys(prices).length > 0) {
       priceCache.set(productId, prices);
-      console.log('[3D-Dentists] Fetched live prices for product', productId, prices);
+      console.log('[3D-Dentists] Live prices for product', productId, prices);
       return prices;
     }
 

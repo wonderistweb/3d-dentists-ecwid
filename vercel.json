@@ -1,5 +1,10 @@
 {
   "outputDirectory": "dist",
+  "functions": {
+    "api/sync-prices.js": {
+      "maxDuration": 60
+    }
+  },
   "headers": [
     {
       "source": "/ecwid-custom.js",

@@ -88,7 +88,7 @@ const PRODUCTS = {
     lpAssistantCap: 2,
     hasMastermind: true,
     mmDiscount: 3000,
-    mastermindDoApplies: true,
+    mastermindDoApplies: false,
   },
   'FAE': {
     id: 817677321,
@@ -107,7 +107,7 @@ const PRODUCTS = {
     lpAssistantCap: 2,
     hasMastermind: true,
     mmDiscount: 3000,
-    mastermindDoApplies: true,
+    mastermindDoApplies: false,
   },
   'TRT': {
     id: 817677322,

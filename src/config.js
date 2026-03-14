@@ -83,6 +83,7 @@ export const COURSE_CONFIG = {
     livePatientAssistantCap: 2,  // APO enforces; JS mirrors
     hasMastermind: true,
     mastermindDiscount: 3000,    // per-doctor flat discount
+    mastermindDoApplies: false,  // MasterMind discount only on Live Patient track
   },
 
   '3D-FAE-001': {
@@ -95,6 +96,7 @@ export const COURSE_CONFIG = {
     livePatientAssistantCap: 2,
     hasMastermind: true,
     mastermindDiscount: 3000,
+    mastermindDoApplies: false,  // MasterMind discount only on Live Patient track
   },
 
   '3D-TRT-001': {

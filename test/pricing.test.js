@@ -127,10 +127,10 @@ describe('calcAssistantPrice', () => {
     expect(result.total).toBe((17995 - 3000) + 3 * 995);
   });
 
-  it('didactic only + MasterMind applies for AGS', () => {
+  it('didactic only + MasterMind does NOT apply for AGS', () => {
     const result = calcAssistantPrice(ags, 1, 0, { isMastermind: true, isDidacticOnly: true });
-    // AGS has no mastermindDoApplies flag (defaults to true)
-    expect(result.total).toBe(3995 - 3000);
+    // mastermindDoApplies: false → discount excluded for Didactic Only
+    expect(result.total).toBe(3995);
   });
 
   it('TRT didactic only + MasterMind does NOT apply', () => {

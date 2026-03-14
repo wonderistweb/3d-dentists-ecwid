@@ -28,8 +28,8 @@ const COURSE_META = {
   '817672610': { sku: '3D-SD-001',  type: 'teamMembers', hasDigitalAccess: false, hasMastermind: false, name: 'Smile Design' },
   '817677323': { sku: '3D-CAA-001', type: 'teamMembers', hasDigitalAccess: false, hasMastermind: false, name: 'Clear Aligner Activation' },
   '817677320': { sku: '3D-SAI-001', type: 'teamMembers', hasDigitalAccess: false, hasMastermind: false, name: 'Sleep Apnea Implementation' },
-  '817672612': { sku: '3D-AGS-001', type: 'assistants',  hasMastermind: true, mastermindDoApplies: true, name: 'Advanced Grafting & Sinus' },
-  '817677321': { sku: '3D-FAE-001', type: 'assistants',  hasMastermind: true, mastermindDoApplies: true, name: 'Full Arch Express' },
+  '817672612': { sku: '3D-AGS-001', type: 'assistants',  hasMastermind: true, mastermindDoApplies: false, name: 'Advanced Grafting & Sinus' },
+  '817677321': { sku: '3D-FAE-001', type: 'assistants',  hasMastermind: true, mastermindDoApplies: false, name: 'Full Arch Express' },
   '817677322': { sku: '3D-TRT-001', type: 'assistants',  hasMastermind: true, mastermindDoApplies: false, name: 'Tooth Replacement Therapy' },
 };
 
@@ -190,13 +190,16 @@ function calculateCombinationPrice(combo, prices, meta) {
     const isDLP = /Didactic & Live Patients/.test(reg);
 
     if (isMM) {
-      const asstRate = prices.assistantPriceMM;
       if (isDLP) {
         // MasterMind Live Patient: doctorPrice - discount + assistants at MM rate
-        return (prices.doctorPrice - prices.mmDiscount) + asstCount * asstRate;
+        return (prices.doctorPrice - prices.mmDiscount) + asstCount * prices.assistantPriceMM;
+      } else if (meta.mastermindDoApplies !== false) {
+        // MasterMind Didactic Only (only when mastermindDoApplies is not false)
+        return (prices.didacticOnlyPrice - prices.mmDiscount) + asstCount * prices.assistantPriceMM;
       } else {
-        // MasterMind Didactic Only (only exists when mastermindDoApplies is true)
-        return (prices.didacticOnlyPrice - prices.mmDiscount) + asstCount * asstRate;
+        // mastermindDoApplies is false — DO-MM combos shouldn't exist,
+        // but if they do, price them same as regular DO (no discount)
+        return prices.didacticOnlyPrice + asstCount * prices.assistantPrice;
       }
     }
 

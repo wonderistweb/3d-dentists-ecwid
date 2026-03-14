@@ -58,6 +58,14 @@ function getOpt(combo, optionName) {
 }
 
 /**
+ * Get the price from a combination.
+ * Ecwid API uses `defaultDisplayedPrice` on combinations, not `price`.
+ */
+function getPrice(combo) {
+  return combo.defaultDisplayedPrice ?? combo.price;
+}
+
+/**
  * Derive all price fields from the product's combinations (variations).
  *
  * @param {object} config - Base course config (type, flags, caps)
@@ -91,7 +99,7 @@ function deriveTeamMemberPrices(config, product, combos) {
   });
   if (!baseCombo) return {};
 
-  const doctorPrice = baseCombo.price;
+  const doctorPrice = getPrice(baseCombo);
   const baseReg = getOpt(baseCombo, 'Registration');
 
   // Find the same registration with "1 Team Member"
@@ -100,7 +108,7 @@ function deriveTeamMemberPrices(config, product, combos) {
   );
 
   const result = { doctorPrice };
-  if (oneTmCombo) result.teamMemberPrice = oneTmCombo.price - doctorPrice;
+  if (oneTmCombo) result.teamMemberPrice = getPrice(oneTmCombo) - doctorPrice;
 
   // Digital Access price from product-level option markup
   if (config.hasDigitalAccess && product.options) {
@@ -131,8 +139,8 @@ function deriveAssistantPrices(config, combos) {
 
   if (!lpBase || !doBase) return {};
 
-  const doctorPrice = lpBase.price;
-  const didacticOnlyPrice = doBase.price;
+  const doctorPrice = getPrice(lpBase);
+  const didacticOnlyPrice = getPrice(doBase);
   const doReg = getOpt(doBase, 'Registration');
 
   // Assistant price from DO base → "1 Assistant" delta
@@ -141,7 +149,7 @@ function deriveAssistantPrices(config, combos) {
   );
 
   const result = { doctorPrice, didacticOnlyPrice };
-  if (doOneAsst) result.assistantPrice = doOneAsst.price - didacticOnlyPrice;
+  if (doOneAsst) result.assistantPrice = getPrice(doOneAsst) - didacticOnlyPrice;
 
   // MasterMind pricing
   if (config.hasMastermind) {
@@ -151,14 +159,14 @@ function deriveAssistantPrices(config, combos) {
       return reg && /Didactic & Live Patients - MasterMind$/.test(reg) && getOpt(c, 'Assistants') === 'None';
     });
     if (mmLpBase) {
-      result.mastermindDiscount = doctorPrice - mmLpBase.price;
+      result.mastermindDiscount = doctorPrice - getPrice(mmLpBase);
       const mmReg = getOpt(mmLpBase, 'Registration');
 
       const mmOneAsst = combos.find((c) =>
         getOpt(c, 'Registration') === mmReg && getOpt(c, 'Assistants') === '1 Assistant',
       );
       if (mmOneAsst) {
-        result.assistantPriceMM = mmOneAsst.price - mmLpBase.price;
+        result.assistantPriceMM = getPrice(mmOneAsst) - getPrice(mmLpBase);
       }
     }
   }

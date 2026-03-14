@@ -7,7 +7,7 @@ import { derivePrices } from '../src/api.js';
 function makeCombo(optionPairs, price) {
   return {
     options: optionPairs.map(([name, value]) => ({ name, value })),
-    price,
+    defaultDisplayedPrice: price,
   };
 }
 

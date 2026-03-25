@@ -85,17 +85,28 @@ async function ecwidDelete(path, token) {
   return resp.json();
 }
 
-async function archiveWebflowItem(collectionId, itemId, token) {
-  const resp = await fetch(`https://api.webflow.com/v2/collections/${collectionId}/items/${itemId}`, {
+/**
+ * Unpublish a Webflow CMS item from the live site.
+ * Sets isDraft: true then publishes that state, which removes it from the live site
+ * while preserving the item in the CMS for historical reference.
+ */
+async function unpublishWebflowItem(collectionId, itemId, token) {
+  // 1. Set item to draft
+  const patchResp = await fetch(`https://api.webflow.com/v2/collections/${collectionId}/items/${itemId}`, {
     method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ isArchived: true }),
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ isDraft: true }),
   });
-  if (!resp.ok) throw new Error(`Webflow archive ${itemId} → ${resp.status}: ${await resp.text()}`);
-  return resp.json();
+  if (!patchResp.ok) throw new Error(`Webflow draft ${itemId} → ${patchResp.status}: ${await patchResp.text()}`);
+
+  // 2. Publish the draft state (removes from live site)
+  const pubResp = await fetch(`https://api.webflow.com/v2/collections/${collectionId}/items/publish`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ itemIds: [itemId] }),
+  });
+  if (!pubResp.ok) throw new Error(`Webflow publish-draft ${itemId} → ${pubResp.status}: ${await pubResp.text()}`);
+  return pubResp.json();
 }
 
 // ── Main handler ─────────────────────────────────────────────────────────────
@@ -141,7 +152,7 @@ export default async function handler(req, res) {
     // Find expired course dates (Starting Date in the past, has Ecwid product, not already archived)
     const expired = courseDates.filter(cd => {
       const startDate = cd.fieldData['date-new'];
-      if (!startDate || cd.isArchived) return false;
+      if (!startDate || cd.isArchived || cd.isDraft) return false;
       return new Date(startDate) < now;
     });
 
@@ -222,10 +233,10 @@ export default async function handler(req, res) {
         }
 
         // Archive the Webflow CMS item
-        log.push(`    Archive Webflow item ${cd.id}`);
+        log.push(`    Unpublish Webflow item ${cd.id}`);
         if (!dryRun) {
           try {
-            await archiveWebflowItem(WEBFLOW_COURSE_DATES_COLLECTION, cd.id, webflowToken);
+            await unpublishWebflowItem(WEBFLOW_COURSE_DATES_COLLECTION, cd.id, webflowToken);
             totalArchived++;
           } catch (err) {
             log.push(`    ! ERROR archiving: ${err.message}`);
@@ -239,7 +250,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       dryRun,
-      summary: `${totalDeleted} combo(s) ${dryRun ? 'would be ' : ''}deleted, ${totalArchived} item(s) ${dryRun ? 'would be ' : ''}archived`,
+      summary: `${totalDeleted} combo(s) ${dryRun ? 'would be ' : ''}deleted, ${totalArchived} item(s) ${dryRun ? 'would be ' : ''}unpublished`,
       log,
     });
   } catch (err) {

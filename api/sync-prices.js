@@ -36,6 +36,39 @@ const COURSE_META = {
   '817677322': { sku: '3D-TRT-001', type: 'assistants',  hasMastermind: true, mastermindDoApplies: false, name: 'Tooth Replacement Therapy' },
 };
 
+// ── Date matching ────────────────────────────────────────────────────────────
+// Ecwid Registration values have date prefixes like "Jun 8-12 2026", "Apr 30 - May 1 2026".
+// We match them to Webflow's date-new ISO dates by comparing month abbreviation + start day + year.
+
+const MONTH_ABBRS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/**
+ * Build a short prefix from an ISO date string that will appear at the start
+ * of the corresponding Ecwid Registration value, e.g. "Jun 8" from "2026-06-08".
+ */
+function datePrefix(isoDate) {
+  if (!isoDate) return null;
+  const d = new Date(isoDate);
+  if (isNaN(d)) return null;
+  return `${MONTH_ABBRS[d.getUTCMonth()]} ${d.getUTCDate()}`;
+}
+
+/**
+ * Check if an Ecwid Registration value belongs to a specific course date.
+ * Matches on month abbreviation + start day + year at the beginning of the value.
+ */
+function comboMatchesDate(registrationValue, isoDate) {
+  if (!registrationValue || !isoDate) return false;
+  const d = new Date(isoDate);
+  if (isNaN(d)) return false;
+  const prefix = datePrefix(isoDate);
+  const year = d.getUTCFullYear().toString();
+  // Registration value starts with date prefix and contains the year
+  // Also handle "Team Only - {date}" prefix
+  const regNorm = registrationValue.replace(/^Team Only - /, '');
+  return regNorm.startsWith(prefix) && regNorm.includes(year);
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function parsePrice(str) {
@@ -120,14 +153,26 @@ function buildPriceMap(courses, courseDates) {
 
   // Group course dates by ecwid-product-id, join with parent course
   const priceMap = new Map(); // ecwidProductId → { doctorPrice, teamMemberPrice, ... }
+  // Track sold-out dates per product: ecwidProductId → [{ isoDate, soldOut }]
+  const soldOutMap = new Map(); // ecwidProductId → [{ isoDate, soldOut }]
 
   for (const cd of courseDates) {
     const fd = cd.fieldData;
     const ecwidId = fd['ecwid-product-id'];
-    if (!ecwidId || priceMap.has(ecwidId)) continue; // skip non-Ecwid or already processed
+    if (!ecwidId) continue; // skip non-Ecwid items
 
     const meta = COURSE_META[ecwidId];
     if (!meta) continue; // unknown product
+
+    // Track sold-out status for this date
+    if (!soldOutMap.has(ecwidId)) soldOutMap.set(ecwidId, []);
+    soldOutMap.get(ecwidId).push({
+      isoDate: fd['date-new'],
+      soldOut: fd['sold-out'] === true,
+    });
+
+    // Skip pricing if already processed (multiple dates share one product)
+    if (priceMap.has(ecwidId)) continue;
 
     // Get parent course data via reference
     const parentCourseId = fd.category;
@@ -159,7 +204,7 @@ function buildPriceMap(courses, courseDates) {
     priceMap.set(ecwidId, prices);
   }
 
-  return priceMap;
+  return { priceMap, soldOutMap };
 }
 
 // ── Calculate expected price for a combination ───────────────────────────────
@@ -216,7 +261,7 @@ function calculateCombinationPrice(combo, prices, meta) {
 
 // ── Sync a single Ecwid product ──────────────────────────────────────────────
 
-async function syncProduct(ecwidProductId, prices, meta, ecwidToken, dryRun) {
+async function syncProduct(ecwidProductId, prices, meta, ecwidToken, dryRun, soldOutDates) {
   const log = [];
   const pid = ecwidProductId;
 
@@ -250,27 +295,64 @@ async function syncProduct(ecwidProductId, prices, meta, ecwidToken, dryRun) {
   let updated = 0;
   let unchanged = 0;
   let errors = 0;
+  let stockUpdated = 0;
 
   for (const combo of combos) {
+    const reg = getOpt(combo, 'Registration');
+    const comboUpdate = {};
+
+    // ── Price sync ──
     const expectedPrice = calculateCombinationPrice(combo, prices, meta);
     if (expectedPrice == null) {
-      log.push(`  ? combo ${combo.id}: could not calculate price (reg=${getOpt(combo, 'Registration')})`);
+      log.push(`  ? combo ${combo.id}: could not calculate price (reg=${reg})`);
       continue;
     }
 
     const currentPrice = combo.price ?? combo.defaultDisplayedPrice;
-    const diff = Math.abs(currentPrice - expectedPrice);
+    const priceDiff = Math.abs(currentPrice - expectedPrice);
+    if (priceDiff >= 0.01) {
+      comboUpdate.price = expectedPrice;
+    }
 
-    if (diff < 0.01) {
+    // ── Sold-out stock sync ──
+    if (soldOutDates && soldOutDates.length > 0) {
+      // Determine if this combo's date is sold out
+      const matchingDate = soldOutDates.find(sd => sd.isoDate && comboMatchesDate(reg, sd.isoDate));
+      // Digital Access Only has no date prefix — it's tied to the product, not a date
+      const isDateless = /^digital access only$/i.test(reg);
+
+      if (matchingDate && !isDateless) {
+        const shouldBeOutOfStock = matchingDate.soldOut;
+        const isCurrentlyUnlimited = combo.unlimited !== false;
+        const currentQty = combo.quantity ?? 0;
+
+        if (shouldBeOutOfStock && (isCurrentlyUnlimited || currentQty > 0)) {
+          comboUpdate.unlimited = false;
+          comboUpdate.quantity = 0;
+          log.push(`  ⊘ combo ${combo.id}: SOLD OUT (${reg})`);
+          stockUpdated++;
+        } else if (!shouldBeOutOfStock && !isCurrentlyUnlimited && currentQty === 0) {
+          comboUpdate.unlimited = true;
+          comboUpdate.quantity = 0;
+          log.push(`  ✓ combo ${combo.id}: back in stock (${reg})`);
+          stockUpdated++;
+        }
+      }
+    }
+
+    // ── Apply updates ──
+    if (Object.keys(comboUpdate).length === 0) {
       unchanged++;
       continue;
     }
 
-    log.push(`  ~ combo ${combo.id}: $${currentPrice} → $${expectedPrice} (${getOpt(combo, 'Registration')} / ${getOpt(combo, 'Team Members') || getOpt(combo, 'Assistants')})`);
+    if (comboUpdate.price != null) {
+      log.push(`  ~ combo ${combo.id}: $${currentPrice} → $${expectedPrice} (${reg} / ${getOpt(combo, 'Team Members') || getOpt(combo, 'Assistants')})`);
+    }
 
     if (!dryRun) {
       try {
-        await ecwidPut(`/products/${pid}/combinations/${combo.id}`, { price: expectedPrice }, ecwidToken);
+        await ecwidPut(`/products/${pid}/combinations/${combo.id}`, comboUpdate, ecwidToken);
         updated++;
       } catch (err) {
         log.push(`  ! ERROR updating combo ${combo.id}: ${err.message}`);
@@ -315,7 +397,7 @@ async function syncProduct(ecwidProductId, prices, meta, ecwidToken, dryRun) {
     }
   }
 
-  log.push(`  Result: ${updated} updated, ${unchanged} unchanged, ${errors} errors`);
+  log.push(`  Result: ${updated} updated, ${unchanged} unchanged, ${stockUpdated} stock changes, ${errors} errors`);
 
   return {
     productId: pid,
@@ -323,6 +405,7 @@ async function syncProduct(ecwidProductId, prices, meta, ecwidToken, dryRun) {
     status: errors > 0 ? 'partial' : 'ok',
     updated,
     unchanged,
+    stockUpdated,
     errors,
     log,
   };
@@ -372,15 +455,15 @@ export default async function handler(req, res) {
       fetchWebflowItems(WEBFLOW_COURSE_DATES_COLLECTION, webflowToken),
     ]);
 
-    // 2. Build price map from Webflow data
-    const priceMap = buildPriceMap(courses, courseDates);
+    // 2. Build price map and sold-out map from Webflow data
+    const { priceMap, soldOutMap } = buildPriceMap(courses, courseDates);
 
     // 3. Determine which products to sync
     const productIds = targetProductId
       ? [targetProductId]
       : [...priceMap.keys()];
 
-    // 4. Sync each product
+    // 4. Sync each product (pricing + sold-out stock)
     const results = [];
     for (const pid of productIds) {
       const meta = COURSE_META[pid];
@@ -395,17 +478,19 @@ export default async function handler(req, res) {
         continue;
       }
 
-      const result = await syncProduct(pid, prices, meta, ecwidToken, dryRun);
+      const soldOutDates = soldOutMap.get(pid) || [];
+      const result = await syncProduct(pid, prices, meta, ecwidToken, dryRun, soldOutDates);
       results.push(result);
     }
 
     const totalUpdated = results.reduce((sum, r) => sum + (r.updated || 0), 0);
+    const totalStock = results.reduce((sum, r) => sum + (r.stockUpdated || 0), 0);
     const totalErrors = results.reduce((sum, r) => sum + (r.errors || 0), 0);
 
     return res.status(200).json({
       success: true,
       dryRun,
-      summary: `${totalUpdated} combinations ${dryRun ? 'would be ' : ''}updated, ${totalErrors} errors`,
+      summary: `${totalUpdated} combinations ${dryRun ? 'would be ' : ''}updated, ${totalStock} stock changes, ${totalErrors} errors`,
       products: results,
     });
   } catch (err) {

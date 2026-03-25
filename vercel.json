@@ -1,7 +1,16 @@
 {
   "outputDirectory": "dist",
+  "crons": [
+    {
+      "path": "/api/cleanup-dates",
+      "schedule": "0 10 * * *"
+    }
+  ],
   "functions": {
     "api/sync-prices.js": {
+      "maxDuration": 60
+    },
+    "api/cleanup-dates.js": {
       "maxDuration": 60
     }
   },

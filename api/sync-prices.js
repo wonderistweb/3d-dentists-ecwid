@@ -363,6 +363,40 @@ async function syncProduct(ecwidProductId, prices, meta, ecwidToken, dryRun, sol
     }
   }
 
+  // ── Default combination check ──
+  // If the current default combo is out of stock, switch to an in-stock one
+  // so the product page doesn't show "Sold Out" when other dates are available.
+  if (stockUpdated > 0 || soldOutDates?.some(sd => sd.soldOut)) {
+    try {
+      const product = await ecwidGet(`/products/${pid}`, ecwidToken);
+      const defaultId = product.defaultCombinationId;
+      const defaultCombo = combos.find(c => c.id === defaultId);
+
+      if (defaultCombo && defaultCombo.unlimited === false && (defaultCombo.quantity ?? 0) === 0) {
+        // Default is out of stock — find a basic in-stock combo (no assistants/TM, non-MasterMind)
+        const replacement = combos.find(c => {
+          if (c.unlimited === false && (c.quantity ?? 0) === 0) return false; // also out of stock
+          const reg = getOpt(c, 'Registration');
+          if (!reg || /MasterMind/.test(reg) || /Team Only/i.test(reg) || /Digital Access Only/i.test(reg)) return false;
+          const addOn = getOpt(c, 'Team Members') || getOpt(c, 'Assistants');
+          return !addOn || addOn === 'None';
+        });
+
+        if (replacement) {
+          log.push(`  ↻ Default combo ${defaultId} is out of stock → switching to ${replacement.id} (${getOpt(replacement, 'Registration')})`);
+          if (!dryRun) {
+            await ecwidPut(`/products/${pid}`, { defaultCombinationId: replacement.id }, ecwidToken);
+          }
+        } else {
+          log.push(`  ⚠ Default combo is out of stock but no in-stock replacement found`);
+        }
+      }
+    } catch (err) {
+      log.push(`  ! ERROR checking default combo: ${err.message}`);
+      errors++;
+    }
+  }
+
   // Update Digital Access option markup if applicable
   if (meta.hasDigitalAccess && prices.digitalAccessPrice != null) {
     try {

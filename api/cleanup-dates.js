@@ -223,31 +223,6 @@ export default async function handler(req, res) {
           }
         }
 
-        // Fix default combination if it was deleted or is now out of stock
-        if (matching.length > 0 && !dryRun) {
-          try {
-            const product = await ecwidGet(`/products/${ecwidId}`, ecwidToken);
-            const deletedIds = new Set(matching.map(c => c.id));
-            const remainingCombos = combos.filter(c => !deletedIds.has(c.id));
-
-            if (deletedIds.has(product.defaultCombinationId) && remainingCombos.length > 0) {
-              // Pick a basic in-stock combo as the new default
-              const replacement = remainingCombos.find(c => {
-                const reg = getOpt(c, 'Registration');
-                if (!reg || /MasterMind/.test(reg) || /Team Only/i.test(reg) || /Digital Access Only/i.test(reg)) return false;
-                if (c.unlimited === false && (c.quantity ?? 0) === 0) return false;
-                const addOn = getOpt(c, 'Team Members') || getOpt(c, 'Assistants');
-                return !addOn || addOn === 'None';
-              }) || remainingCombos[0];
-
-              await ecwidPut(`/products/${ecwidId}`, { defaultCombinationId: replacement.id }, ecwidToken);
-              log.push(`    ↻ Default combo was deleted → switched to ${replacement.id} (${getOpt(replacement, 'Registration')})`);
-            }
-          } catch (err) {
-            log.push(`    ! ERROR fixing default combo: ${err.message}`);
-          }
-        }
-
         // Archive the Webflow CMS item
         log.push(`    Unpublish Webflow item ${cd.id}`);
         if (!dryRun) {

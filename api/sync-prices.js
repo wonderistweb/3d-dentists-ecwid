@@ -363,36 +363,38 @@ async function syncProduct(ecwidProductId, prices, meta, ecwidToken, dryRun, sol
     }
   }
 
-  // ── Default combination check ──
-  // If the current default combo is out of stock, switch to an in-stock one
-  // so the product page doesn't show "Sold Out" when other dates are available.
+  // ── Reorder Registration choices so in-stock dates come first ──
+  // Ecwid ties defaultCombinationId to the first Registration choice.
+  // Reordering choices is the only reliable way to change which combo loads by default.
   if (stockUpdated > 0 || soldOutDates?.some(sd => sd.soldOut)) {
     try {
       const product = await ecwidGet(`/products/${pid}`, ecwidToken);
-      const defaultId = product.defaultCombinationId;
-      const defaultCombo = combos.find(c => c.id === defaultId);
-
-      if (defaultCombo && defaultCombo.unlimited === false && (defaultCombo.quantity ?? 0) === 0) {
-        // Default is out of stock — find a basic in-stock combo (no assistants/TM, non-MasterMind)
-        const replacement = combos.find(c => {
-          if (c.unlimited === false && (c.quantity ?? 0) === 0) return false; // also out of stock
-          const reg = getOpt(c, 'Registration');
-          if (!reg || /MasterMind/.test(reg) || /Team Only/i.test(reg) || /Digital Access Only/i.test(reg)) return false;
-          const addOn = getOpt(c, 'Team Members') || getOpt(c, 'Assistants');
-          return !addOn || addOn === 'None';
-        });
-
-        if (replacement) {
-          log.push(`  ↻ Default combo ${defaultId} is out of stock → switching to ${replacement.id} (${getOpt(replacement, 'Registration')})`);
+      const regOption = product.options?.find(o => o.name === 'Registration');
+      if (regOption) {
+        const soldOutDatesSet = new Set(
+          (soldOutDates || []).filter(sd => sd.soldOut && sd.isoDate).map(sd => datePrefix(sd.isoDate))
+        );
+        // Partition choices: in-stock first, sold-out last
+        const inStock = [];
+        const outOfStock = [];
+        for (const ch of regOption.choices) {
+          const isSoldOut = [...soldOutDatesSet].some(prefix => prefix && ch.text.startsWith(prefix));
+          (isSoldOut ? outOfStock : inStock).push(ch);
+        }
+        // Only reorder if the first choice is currently sold out
+        if (outOfStock.length > 0 && inStock.length > 0 && [...soldOutDatesSet].some(prefix => prefix && regOption.choices[0].text.startsWith(prefix))) {
+          const reordered = [...inStock, ...outOfStock];
+          const updatedOptions = product.options.map(opt =>
+            opt.name === 'Registration' ? { ...opt, choices: reordered } : opt
+          );
+          log.push(`  ↻ Reordered Registration choices: in-stock dates first (was: ${regOption.choices[0].text} → now: ${reordered[0].text})`);
           if (!dryRun) {
-            await ecwidPut(`/products/${pid}`, { defaultCombinationId: replacement.id }, ecwidToken);
+            await ecwidPut(`/products/${pid}`, { options: updatedOptions }, ecwidToken);
           }
-        } else {
-          log.push(`  ⚠ Default combo is out of stock but no in-stock replacement found`);
         }
       }
     } catch (err) {
-      log.push(`  ! ERROR checking default combo: ${err.message}`);
+      log.push(`  ! ERROR reordering choices: ${err.message}`);
       errors++;
     }
   }

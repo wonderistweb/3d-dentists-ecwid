@@ -87,26 +87,17 @@ async function ecwidDelete(path, token) {
 
 /**
  * Unpublish a Webflow CMS item from the live site.
- * Sets isDraft: true then publishes that state, which removes it from the live site
- * while preserving the item in the CMS for historical reference.
+ * Uses DELETE /collections/{id}/items/live which removes from the live site
+ * and sets isDraft: true, preserving the item in the CMS for historical reference.
  */
 async function unpublishWebflowItem(collectionId, itemId, token) {
-  // 1. Set item to draft
-  const patchResp = await fetch(`https://api.webflow.com/v2/collections/${collectionId}/items/${itemId}`, {
-    method: 'PATCH',
+  const resp = await fetch(`https://api.webflow.com/v2/collections/${collectionId}/items/live`, {
+    method: 'DELETE',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ isDraft: true }),
+    body: JSON.stringify({ items: [{ id: itemId }] }),
   });
-  if (!patchResp.ok) throw new Error(`Webflow draft ${itemId} → ${patchResp.status}: ${await patchResp.text()}`);
-
-  // 2. Publish the draft state (removes from live site)
-  const pubResp = await fetch(`https://api.webflow.com/v2/collections/${collectionId}/items/publish`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ itemIds: [itemId] }),
-  });
-  if (!pubResp.ok) throw new Error(`Webflow publish-draft ${itemId} → ${pubResp.status}: ${await pubResp.text()}`);
-  return pubResp.json();
+  if (!resp.ok) throw new Error(`Webflow unpublish ${itemId} → ${resp.status}: ${await resp.text()}`);
+  // Returns 204 No Content on success
 }
 
 // ── Main handler ─────────────────────────────────────────────────────────────

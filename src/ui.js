@@ -47,12 +47,31 @@ export function parseRegistrationOptions(container) {
 }
 
 /**
- * Filter registration options for display.
+ * Parse a date prefix like "Jun 8-12 2026" or "Apr 30 - May 1 2026" into
+ * a comparable Date. Uses the start day + first month + year found.
+ */
+function parseDatePrefix(value) {
+  const MONTHS = { Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11 };
+  const m = value.match(/^([A-Z][a-z]{2})\s+(\d{1,2})/);
+  const y = value.match(/(\d{4})/);
+  if (m && y) return new Date(parseInt(y[1]), MONTHS[m[1]] ?? 0, parseInt(m[2]));
+  return new Date(9999, 0); // unknown dates sort last
+}
+
+/**
+ * Filter registration options for display, sort chronologically, and mark sold-out.
  * Hide MasterMind-suffixed and Team Only options (those are used internally for cart calls).
  * Team Only is handled by setting the Doctors stepper to 0.
  */
-export function getVisibleOptions(allOptions) {
-  return allOptions.filter((o) => !o.isMastermind && !o.isTeamOnly);
+export function getVisibleOptions(allOptions, soldOutDates) {
+  const so = soldOutDates || new Set();
+  return allOptions
+    .filter((o) => !o.isMastermind && !o.isTeamOnly)
+    .map((o) => {
+      const isSoldOut = [...so].some(prefix => o.value.startsWith(prefix));
+      return { ...o, isSoldOut };
+    })
+    .sort((a, b) => parseDatePrefix(a.value) - parseDatePrefix(b.value));
 }
 
 // ─── Inject styles ────────────────────────────────────────────────────────────
@@ -187,6 +206,16 @@ function injectStyles() {
       flex-shrink: 0 !important;
       letter-spacing: 0.02em !important;
     }
+    .${PREFIX}-badge-wrap {
+      display: flex !important;
+      gap: 6px !important;
+      align-items: center !important;
+      flex-shrink: 0 !important;
+      margin-left: 8px !important;
+    }
+    .${PREFIX}-badge-wrap .${PREFIX}-badge {
+      margin-left: 0 !important;
+    }
     .${PREFIX}-badge-lp {
       background: #fef2f2 !important;
       color: #dc2626 !important;
@@ -194,6 +223,20 @@ function injectStyles() {
     .${PREFIX}-badge-to {
       background: #eff6ff !important;
       color: #2563eb !important;
+    }
+    .${PREFIX}-badge-so {
+      background: #f3f4f6 !important;
+      color: #6b7280 !important;
+    }
+
+    /* ── Sold out registration cards ── */
+    .${PREFIX}-reg-item.${PREFIX}-sold-out {
+      opacity: 0.5 !important;
+      cursor: not-allowed !important;
+      pointer-events: none !important;
+    }
+    .${PREFIX}-reg-item.${PREFIX}-sold-out .${PREFIX}-reg-label {
+      text-decoration: line-through !important;
     }
 
     /* ── MasterMind toggle ── */
@@ -496,12 +539,13 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
   nativeContainer.parentElement.insertBefore(widget, nativeContainer.nextSibling);
 
   const state = createState(config);
-  const visibleOptions = getVisibleOptions(allRegistrationOptions);
+  const visibleOptions = getVisibleOptions(allRegistrationOptions, config.soldOutDates);
   let addedToCart = false;
 
-  // Select first visible option by default
-  if (visibleOptions.length > 0) {
-    state.registration = visibleOptions[0].value;
+  // Select first non-sold-out option by default
+  const firstAvailable = visibleOptions.find(o => !o.isSoldOut) || visibleOptions[0];
+  if (firstAvailable) {
+    state.registration = firstAvailable.value;
   }
 
   /** Reset addedToCart and re-render (called when user changes any option) */
@@ -520,7 +564,8 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
 
     visibleOptions.forEach((opt) => {
       const item = el('li', `${PREFIX}-reg-item`);
-      if (opt.value === state.registration) item.classList.add(`${PREFIX}-selected`);
+      if (opt.isSoldOut) item.classList.add(`${PREFIX}-sold-out`);
+      if (opt.value === state.registration && !opt.isSoldOut) item.classList.add(`${PREFIX}-selected`);
 
       const left = el('div', `${PREFIX}-reg-left`);
       const radio = document.createElement('input');
@@ -528,6 +573,7 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
       radio.name = `${PREFIX}-reg`;
       radio.value = opt.value;
       radio.checked = opt.value === state.registration;
+      if (opt.isSoldOut) radio.disabled = true;
       left.appendChild(radio);
 
       const lbl = el('span', `${PREFIX}-reg-label`);
@@ -535,20 +581,29 @@ export function renderWidget(nativeContainer, config, productId, allRegistration
       left.appendChild(lbl);
       item.appendChild(left);
 
+      const badgeContainer = el('div', `${PREFIX}-badge-wrap`);
+      if (opt.isSoldOut) {
+        const badge = el('span', `${PREFIX}-badge ${PREFIX}-badge-so`);
+        badge.textContent = 'Sold Out';
+        badgeContainer.appendChild(badge);
+      }
       if (opt.isLivePatient) {
         const badge = el('span', `${PREFIX}-badge ${PREFIX}-badge-lp`);
         badge.textContent = 'Live Patients';
-        item.appendChild(badge);
+        badgeContainer.appendChild(badge);
       }
+      if (badgeContainer.children.length) item.appendChild(badgeContainer);
 
-      item.addEventListener('click', () => {
-        state.registration = opt.value;
-        // Reset mastermind if didactic only and not applicable
-        if (isDidacticOnly(opt.value) && config.mastermindDoApplies === false) {
-          state.isMastermind = false;
-        }
-        onOptionChange();
-      });
+      if (!opt.isSoldOut) {
+        item.addEventListener('click', () => {
+          state.registration = opt.value;
+          // Reset mastermind if didactic only and not applicable
+          if (isDidacticOnly(opt.value) && config.mastermindDoApplies === false) {
+            state.isMastermind = false;
+          }
+          onOptionChange();
+        });
+      }
 
       regList.appendChild(item);
     });

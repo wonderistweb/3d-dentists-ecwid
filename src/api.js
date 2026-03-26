@@ -175,6 +175,33 @@ function deriveAssistantPrices(config, combos) {
 }
 
 /**
+ * Determine which registration date prefixes are sold out by checking
+ * combination stock. A date is sold out if ALL of its non-MasterMind
+ * combinations have unlimited=false and quantity=0.
+ */
+function deriveSoldOutDates(combos) {
+  // Group combos by date prefix (e.g. "Jun 8-12 2026")
+  const dateGroups = new Map();
+  for (const c of combos) {
+    const reg = getOpt(c, 'Registration');
+    if (!reg || / - MasterMind$/.test(reg) || /^Team Only/i.test(reg)) continue;
+    // Extract the date prefix (everything before " - Didactic")
+    const match = reg.match(/^(.+?)\s*-\s*(?:Didactic|Digital)/);
+    if (!match) continue;
+    const dateKey = match[1].trim();
+    if (!dateGroups.has(dateKey)) dateGroups.set(dateKey, []);
+    dateGroups.get(dateKey).push(c);
+  }
+  // A date is sold out if every combo in its group is out of stock
+  const soldOut = new Set();
+  for (const [dateKey, group] of dateGroups) {
+    const allOut = group.every(c => c.unlimited === false && (c.quantity ?? 0) === 0);
+    if (allOut) soldOut.add(dateKey);
+  }
+  return soldOut;
+}
+
+/**
  * Fetch product prices, derive them from variations, and cache the result.
  * Falls back to an empty object on failure (config.js defaults will be used).
  */
@@ -190,6 +217,7 @@ export async function fetchProductPrices(productId, baseConfig) {
 
     const product = await fetchProduct(productId, token);
     const prices = derivePrices(baseConfig, product);
+    prices.soldOutDates = deriveSoldOutDates(product.combinations || []);
 
     if (Object.keys(prices).length > 0) {
       priceCache.set(productId, prices);
